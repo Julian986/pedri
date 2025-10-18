@@ -1,0 +1,9 @@
+# Archivos que no se suben a Vercel
+.env.local
+.env*.local
+README.md
+DEPLOY.md
+env.example
+
+
+
