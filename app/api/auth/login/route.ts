@@ -34,12 +34,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = generateToken(usuario._id.toString(), usuario.email, usuario.rol);
+    const token = generateToken(
+      String(usuario._id), 
+      usuario.email as string, 
+      usuario.rol as string
+    );
 
     return NextResponse.json({
       token,
       usuario: {
-        id: usuario._id,
+        id: String(usuario._id),
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
