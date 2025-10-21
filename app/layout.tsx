@@ -3,6 +3,7 @@ import './globals.css'
 import RegisterServiceWorker from './register-sw'
 import { ModalProvider } from '@/contexts/ModalContext'
 import BottomNavWrapper from '@/components/BottomNavWrapper'
+import { Analytics } from '@vercel/analytics/react'
 
 export const metadata: Metadata = {
   title: 'Pedri',
@@ -41,6 +42,7 @@ export default function RootLayout({
             {children}
           </div>
           <BottomNavWrapper />
+          <Analytics />
         </ModalProvider>
       </body>
     </html>
