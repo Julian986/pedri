@@ -1,17 +1,18 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import RegisterServiceWorker from './register-sw'
-import BottomNav from '@/components/BottomNav'
+import { ModalProvider } from '@/contexts/ModalContext'
+import BottomNavWrapper from '@/components/BottomNavWrapper'
 
 export const metadata: Metadata = {
-  title: 'Gestión de Propiedades',
-  description: 'Sistema de gestión de propiedades y reservas',
+  title: 'Pedri',
+  description: 'Software hecho a medida',
   manifest: '/manifest.json',
   themeColor: '#000000',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Propiedades',
+    title: 'Pedri',
   },
   viewport: {
     width: 'device-width',
@@ -34,11 +35,13 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body>
-        <RegisterServiceWorker />
-        <div className="pb-16 md:pb-0">
-          {children}
-        </div>
-        <BottomNav />
+        <ModalProvider>
+          <RegisterServiceWorker />
+          <div className="pb-16 md:pb-0">
+            {children}
+          </div>
+          <BottomNavWrapper />
+        </ModalProvider>
       </body>
     </html>
   )

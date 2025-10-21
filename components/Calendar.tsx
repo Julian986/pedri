@@ -1,17 +1,51 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IoChevronBack, IoChevronForward } from 'react-icons/io5'
 
 interface CalendarProps {
-  reservations?: { [key: string]: number } // día: cantidad de reservas
+  reservations?: { [key: string]: { checkIn: boolean; checkOut: boolean } } // día: tipo de reservas
   onDayClick?: (day: number) => void
+  onMonthChange?: (month: number, year: number) => void
+  currentMonth?: number
+  currentYear?: number
 }
 
-export default function Calendar({ reservations = {}, onDayClick }: CalendarProps) {
+export default function Calendar({ reservations = {}, onDayClick, onMonthChange, currentMonth: externalMonth, currentYear: externalYear }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [prevMonth, setPrevMonth] = useState(new Date().getMonth())
+  const [prevYear, setPrevYear] = useState(new Date().getFullYear())
+
+  // Sincronizar con mes/año externo
+  useEffect(() => {
+    if (externalMonth !== undefined && externalYear !== undefined) {
+      const newDate = new Date(externalYear, externalMonth, 1)
+      if (currentDate.getMonth() !== externalMonth || currentDate.getFullYear() !== externalYear) {
+        setCurrentDate(newDate)
+      }
+    }
+  }, [externalMonth, externalYear])
+
+  // Notificar cambio de mes al componente padre solo cuando cambia localmente
+  useEffect(() => {
+    if (onMonthChange && mounted) {
+      const month = currentDate.getMonth()
+      const year = currentDate.getFullYear()
+      
+      if (month !== prevMonth || year !== prevYear) {
+        onMonthChange(month, year)
+        setPrevMonth(month)
+        setPrevYear(year)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDate, mounted])
+
+  // Distancia mínima para considerar un swipe
+  const minSwipeDistance = 50
 
   useEffect(() => {
     setMounted(true)
@@ -51,12 +85,17 @@ export default function Calendar({ reservations = {}, onDayClick }: CalendarProp
         month === today.getMonth() &&
         year === today.getFullYear()
       
+      const dayReservations = reservations[day]
+      const hasCheckIn = dayReservations?.checkIn || false
+      const hasCheckOut = dayReservations?.checkOut || false
+      
       days.push({
         day,
         isCurrentMonth: true,
         isToday,
         isSelected: selectedDay === day,
-        hasReservations: reservations[day] > 0,
+        hasCheckIn,
+        hasCheckOut,
       })
     }
 
@@ -92,8 +131,32 @@ export default function Calendar({ reservations = {}, onDayClick }: CalendarProp
     }
   }
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    
+    if (isLeftSwipe) {
+      nextMonth()
+    } else if (isRightSwipe) {
+      previousMonth()
+    }
+  }
+
   const days = getDaysInMonth(currentDate)
   const monthName = monthNames[currentDate.getMonth()]
+  const year = currentDate.getFullYear()
 
   if (!mounted) {
     return (
@@ -106,22 +169,16 @@ export default function Calendar({ reservations = {}, onDayClick }: CalendarProp
   }
 
   return (
-    <div className="bg-black text-white h-[45vh] flex flex-col">
+    <div 
+      className="bg-black text-white h-[45vh] flex flex-col"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Header con navegación del mes */}
-      <div className="flex items-center justify-between px-4 py-4">
-        <button
-          onClick={previousMonth}
-          className="p-2 hover:bg-gray-900 rounded-full transition-colors"
-        >
-          <IoChevronBack className="text-xl" />
-        </button>
-        <h2 className="text-lg font-medium">{monthName}</h2>
-        <button
-          onClick={nextMonth}
-          className="p-2 hover:bg-gray-900 rounded-full transition-colors"
-        >
-          <IoChevronForward className="text-xl" />
-        </button>
+      <div className="flex items-center justify-center gap-2 px-4 py-4">
+        <h2 className="text-lg font-medium capitalize">{monthName}</h2>
+        <span className="text-sm text-gray-400">{year}</span>
       </div>
 
       {/* Días de la semana */}
@@ -156,10 +213,14 @@ export default function Calendar({ reservations = {}, onDayClick }: CalendarProp
             >
               <span className="text-sm">{dayInfo.day}</span>
               {/* Indicador de reservas - Azul = check-in, Gris = check-out */}
-              {dayInfo.hasReservations && !dayInfo.isSelected && !dayInfo.isToday && (
+              {!dayInfo.isSelected && !dayInfo.isToday && (dayInfo.hasCheckIn || dayInfo.hasCheckOut) && (
                 <div className="absolute bottom-1 flex gap-0.5">
-                  <div className="w-1 h-1 rounded-full bg-blue-500"></div>
-                  <div className="w-1 h-1 rounded-full bg-gray-500"></div>
+                  {dayInfo.hasCheckIn && (
+                    <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                  )}
+                  {dayInfo.hasCheckOut && (
+                    <div className="w-1 h-1 rounded-full bg-gray-500"></div>
+                  )}
                 </div>
               )}
             </button>

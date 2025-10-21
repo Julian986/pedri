@@ -1,7 +1,7 @@
 {
-  "name": "Gestión de Propiedades",
-  "short_name": "Propiedades",
-  "description": "Sistema de gestión de propiedades y reservas",
+  "name": "Pedri",
+  "short_name": "Pedri",
+  "description": "Software hecho a medida",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
