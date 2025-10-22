@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { IoClose, IoRefreshOutline } from 'react-icons/io5'
-import DatePicker from './DatePicker'
+import RangeDatePicker from './RangeDatePicker'
 import { z } from 'zod'
 
 interface ReservationModalProps {
@@ -186,41 +186,28 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           {/* Campos del formulario - con scroll */}
           <div className="p-4 space-y-4 overflow-y-auto flex-1">
-          {/* Desde - Hasta */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <DatePicker
-                label="Desde"
-                value={formData.desde}
-                onChange={(date) => {
-                  setFormData({ ...formData, desde: date })
-                  setTouched({ ...touched, desde: true })
-                  if (errors.desde) {
-                    setErrors({ ...errors, desde: undefined })
-                  }
-                }}
-              />
-              {touched.desde && errors.desde && (
-                <p className="text-red-500 text-xs mt-1 px-1">{errors.desde}</p>
-              )}
-            </div>
-            <div>
-              <DatePicker
-                label="Hasta"
-                value={formData.hasta}
-                onChange={(date) => {
-                  setFormData({ ...formData, hasta: date })
-                  setTouched({ ...touched, hasta: true })
-                  if (errors.hasta) {
-                    setErrors({ ...errors, hasta: undefined })
-                  }
-                }}
-                minDate={formData.desde}
-              />
-              {touched.hasta && errors.hasta && (
-                <p className="text-red-500 text-xs mt-1 px-1">{errors.hasta}</p>
-              )}
-            </div>
+          {/* Periodo (Desde - Hasta) */}
+          <div>
+            <RangeDatePicker
+              startDate={formData.desde}
+              endDate={formData.hasta}
+              onChange={(start, end) => {
+                setFormData({ ...formData, desde: start, hasta: end })
+                setTouched({ ...touched, desde: true, hasta: true })
+                if (errors.desde) {
+                  setErrors({ ...errors, desde: undefined })
+                }
+                if (errors.hasta) {
+                  setErrors({ ...errors, hasta: undefined })
+                }
+              }}
+            />
+            {touched.desde && errors.desde && (
+              <p className="text-red-500 text-xs mt-1 px-1">{errors.desde}</p>
+            )}
+            {touched.hasta && errors.hasta && (
+              <p className="text-red-500 text-xs mt-1 px-1">{errors.hasta}</p>
+            )}
           </div>
 
           {/* Alojamiento */}

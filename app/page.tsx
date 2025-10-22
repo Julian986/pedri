@@ -112,10 +112,12 @@ export default function Home() {
       reservationIndicators[res.checkInDay].checkIn = true
     }
 
-    if (!reservationIndicators[res.checkOutDay]) {
-      reservationIndicators[res.checkOutDay] = { checkIn: false, checkOut: false }
+    if (res.checkOutMonth === currentMonth && res.checkOutYear === currentYear) {
+      if (!reservationIndicators[res.checkOutDay]) {
+        reservationIndicators[res.checkOutDay] = { checkIn: false, checkOut: false }
+      }
+      reservationIndicators[res.checkOutDay].checkOut = true
     }
-    reservationIndicators[res.checkOutDay].checkOut = true
   })
 
   // Obtener reservas del día ordenadas (salidas, entradas, estancias en curso)
