@@ -1,35 +1,50 @@
-// Service Worker básico para PWA
-const CACHE_NAME = 'gestion-propiedades-v1';
-const urlsToCache = [
-  '/',
-  '/manifest.json'
-];
+// Service Worker con force reload - versión actualizada
+const CACHE_NAME = 'pedri-v2-' + new Date().getTime();
 
 self.addEventListener('install', (event) => {
+  // Force immediate activation
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+      .then((cache) => {
+        // Solo cachear manifest, nada más
+        return cache.addAll(['/manifest.json']);
+      })
   );
 });
 
 self.addEventListener('activate', (event) => {
+  // Tomar control inmediatamente
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    clients.claim().then(() => {
+      // Borrar TODOS los cachés antiguos
+      return caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('Eliminando caché antiguo:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      });
     })
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  // Network-first strategy: siempre ir a la red primero
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // No cachear nada automáticamente
+        return response;
+      })
+      .catch(() => {
+        // Solo usar caché como fallback
+        return caches.match(event.request);
+      })
   );
 });
 

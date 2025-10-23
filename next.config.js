@@ -15,6 +15,24 @@ const nextConfig = {
   compress: true,
   // PWA y caché
   poweredByHeader: false,
+  // Cache busting - genera IDs únicos para cada build
+  generateBuildId: async () => {
+    return `build-${Date.now()}`
+  },
+  // Headers personalizados
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
