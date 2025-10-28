@@ -4,6 +4,8 @@ Pedri
 Tasks:
 
 . Pagina Calendario
- - No se cambia el mes, podemos poner una flecha blanca que apunte al dia seleccionado y que se guie para cambiar el mes de eso.
+- Tenemos una version estable de pedri guardada.
+ - Quitar flechas
+ - Ver como funciona la recarga de mes, que pasa cuando llega al final, si el usuario me tiene que pedir que le cargue mas meses.
 
 - Estado libre u ocupado
