@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { IoAdd } from 'react-icons/io5'
+import GastoModal from '@/components/GastoModal'
+import { useModal } from '@/contexts/ModalContext'
 
 interface Gasto {
   id: string
@@ -49,7 +52,14 @@ const gastosEjemplo: Gasto[] = [
 ]
 
 export default function GastosPage() {
-  const [gastos] = useState<Gasto[]>(gastosEjemplo)
+  const [gastos, setGastos] = useState<Gasto[]>(gastosEjemplo)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { setIsModalOpen: setGlobalModalOpen } = useModal()
+
+  // Sincronizar estado local con contexto global
+  useEffect(() => {
+    setGlobalModalOpen(isModalOpen)
+  }, [isModalOpen, setGlobalModalOpen])
 
   const formatearMes = (mes: string) => {
     const [año, mesNum] = mes.split('-')
@@ -66,6 +76,19 @@ export default function GastosPage() {
       currency: 'ARS',
       minimumFractionDigits: 0
     }).format(monto)
+  }
+
+  const handleNuevoGasto = (nuevoGasto: {
+    mes: string
+    tipoGasto: string
+    propiedad: string
+    monto: number
+  }) => {
+    const gasto: Gasto = {
+      id: Date.now().toString(),
+      ...nuevoGasto
+    }
+    setGastos([gasto, ...gastos])
   }
 
   return (
@@ -111,6 +134,21 @@ export default function GastosPage() {
           ))}
         </div>
       </div>
+
+      {/* Botón flotante de agregar */}
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-40"
+      >
+        <IoAdd className="text-3xl" />
+      </button>
+
+      {/* Modal de nuevo gasto */}
+      <GastoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleNuevoGasto}
+      />
     </main>
   )
 }
