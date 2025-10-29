@@ -79,6 +79,22 @@ export default function CalendarioPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [cargando, setCargando] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [colWidth, setColWidth] = useState<number>(160) // ancho en px de la columna de Alojamientos
+  const [mostrarAjusteColumna, setMostrarAjusteColumna] = useState<boolean>(false)
+  const ajusteRef = useRef<HTMLDivElement>(null)
+
+  // Cerrar panel de ajuste al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!mostrarAjusteColumna) return
+      const target = e.target as Node
+      if (ajusteRef.current && !ajusteRef.current.contains(target)) {
+        setMostrarAjusteColumna(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [mostrarAjusteColumna])
 
   // Solo generar días del mes actual visible (máximo 31 días)
   const diasDelMes = useMemo(() => {
@@ -286,14 +302,16 @@ export default function CalendarioPage() {
       </div>
 
       {/* Tabla de calendario */}
-      <div ref={scrollRef} className="flex-1 overflow-x-auto overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-x-auto overflow-y-auto relative">
         <div className="inline-flex flex-col min-w-full">
           {/* Fila de encabezados de días */}
           <div className="flex sticky top-0 bg-black z-20 border-t border-b border-gray-800">
             {/* Columna fija de alojamientos */}
-            <div className="w-48 flex-shrink-0 sticky left-0 bg-black z-30 border-r border-gray-700">
+            <div className="flex-shrink-0 sticky left-0 bg-black z-30 border-r border-gray-700" style={{ width: colWidth }}>
               <div className="h-12 flex items-center px-4">
-                <span className="text-sm font-medium text-gray-400">Alojamientos</span>
+                {colWidth > 102 && (
+                  <span className="text-sm font-medium text-gray-400">Alojamientos</span>
+                )}
               </div>
             </div>
             
@@ -318,7 +336,7 @@ export default function CalendarioPage() {
           {propiedades.map((propiedad) => (
             <div key={propiedad._id} className="flex border-b border-gray-800 hover:bg-gray-900/30 transition-colors">
               {/* Nombre de la propiedad (columna fija) */}
-              <div className="w-48 flex-shrink-0 sticky left-0 bg-black z-20 border-r border-gray-700">
+              <div className="flex-shrink-0 sticky left-0 bg-black z-20 border-r border-gray-700" style={{ width: colWidth }}>
                 <div className="h-14 flex items-center px-4">
                   <div className="text-sm font-medium text-white truncate">
                     {propiedad.nombre}
@@ -358,6 +376,32 @@ export default function CalendarioPage() {
               No hay propiedades registradas
             </div>
           )}
+        </div>
+        {/* Control pegado abajo-izquierda para ajustar ancho de columna */}
+        <div className="sticky left-0 bottom-0 z-40 p-2">
+          <div ref={ajusteRef} className="inline-flex flex-col items-start bg-black/50 backdrop-blur-sm rounded-lg border border-gray-800">
+            <button
+              type="button"
+              onClick={() => setMostrarAjusteColumna((v) => !v)}
+              className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-t-lg"
+              title="Ajustar ancho de la columna de Alojamientos"
+            >
+              Ajustar columna
+            </button>
+            {mostrarAjusteColumna && (
+              <div className="w-[220px] max-w-[70vw] px-3 pb-3">
+                <div className="text-[11px] text-gray-400 mb-2">Ancho: {Math.round(colWidth)} px</div>
+                <input
+                  type="range"
+                  min={80}
+                  max={320}
+                  value={colWidth}
+                  onChange={(e) => setColWidth(parseInt(e.target.value, 10))}
+                  className="w-full accent-blue-500"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </main>
