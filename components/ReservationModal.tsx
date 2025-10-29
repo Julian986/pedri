@@ -152,11 +152,11 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
 
   return (
     <div 
-      className="fixed inset-0 bg-black/80 z-[60] flex items-end md:items-center justify-center pb-16 md:pb-0"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end md:items-center justify-center pb-16 md:pb-0"
       onClick={handleBackdropClick}
     >
       {/* Modal */}
-      <div className="bg-zinc-900 w-full md:max-w-lg md:rounded-t-2xl rounded-t-3xl animate-slide-up flex flex-col max-h-[85vh]">
+      <div className="bg-gray-900 w-full md:max-w-lg md:rounded-t-2xl rounded-t-3xl animate-slide-up flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800 flex-shrink-0">
           <h2 className="text-xl font-semibold text-white">Nueva Reserva</h2>
@@ -219,7 +219,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
               onChange={handleChange}
               onBlur={() => handleBlur('alojamiento')}
               placeholder={touched.alojamiento && errors.alojamiento ? errors.alojamiento : 'Alojamiento'}
-              className={`w-full bg-zinc-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+              className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
                 touched.alojamiento && errors.alojamiento 
                   ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]' 
                   : 'border-gray-700 focus:border-blue-500'
@@ -236,7 +236,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
               onChange={handleChange}
               onBlur={() => handleBlur('huesped')}
               placeholder={touched.huesped && errors.huesped ? errors.huesped : 'Huésped'}
-              className={`w-full bg-zinc-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+              className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
                 touched.huesped && errors.huesped 
                   ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]' 
                   : 'border-gray-700 focus:border-blue-500'
@@ -253,7 +253,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
               onChange={handleChange}
               onBlur={() => handleBlur('telefono')}
               placeholder={touched.telefono && errors.telefono ? errors.telefono : 'Teléfono'}
-              className={`w-full bg-zinc-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+              className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
                 touched.telefono && errors.telefono 
                   ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]' 
                   : 'border-gray-700 focus:border-blue-500'
@@ -271,7 +271,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
                 onChange={handleChange}
                 onBlur={() => handleBlur('total')}
                 placeholder={touched.total && errors.total ? errors.total : 'Total'}
-                className={`w-full bg-zinc-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+                className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
                   touched.total && errors.total 
                     ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]' 
                     : 'border-gray-700 focus:border-blue-500'
@@ -286,7 +286,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
                 onChange={handleChange}
                 onBlur={() => handleBlur('sena')}
                 placeholder={touched.sena && errors.sena ? errors.sena : 'Seña'}
-                className={`w-full bg-zinc-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+                className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
                   touched.sena && errors.sena 
                     ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]' 
                     : 'border-gray-700 focus:border-blue-500'
@@ -297,10 +297,10 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
           </div>
 
           {/* Botón Agregar - Siempre visible al fondo */}
-          <div className="p-4 border-t border-gray-800 bg-zinc-900 flex-shrink-0">
+          <div className="p-4 border-t border-gray-800 bg-gray-900 flex-shrink-0">
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
             >
               Agregar
             </button>

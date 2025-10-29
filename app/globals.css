@@ -23,6 +23,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
+/* Ocultar indicador nativo sólo en el input de mes con clase específica
+   para reemplazarlo por un icono posicionado manualmente */
+input[type="month"].month-input--custom-icon::-webkit-calendar-picker-indicator {
+  opacity: 0 !important;
+}
+
 /* Estilos para number inputs oscuros */
 input[type="number"] {
   color-scheme: dark;
