@@ -49,7 +49,6 @@ export default function CalendarioPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [cargando, setCargando] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const hasScrolledToTodayRef = useRef(false)
 
   // Solo generar días del mes actual visible (máximo 31 días)
   const diasDelMes = useMemo(() => {
@@ -133,90 +132,28 @@ export default function CalendarioPage() {
           { _id: '6', nombre: 'Lo de Vicente' }
         ])
       }
-      let reservasResultado: Reserva[] = []
-      if (dataReservas.success) {
-        reservasResultado = dataReservas.data
+      // Reservas: usar datos reales o fallback simple
+      if (dataReservas.success && dataReservas.data.length > 0) {
+        setReservas(dataReservas.data)
       } else {
-        // Fallback mínimo
-        reservasResultado = [
+        // Solo 2 reservas demo ultra-simples
+        setReservas([
           {
-            _id: 'r1',
+            _id: 'demo-1',
             propiedad: '1',
-            fechaInicio: new Date(añoVisor, mesVisor, 5).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 8).toISOString().split('T')[0],
-            precio: 250,
-            nombreHuesped: 'Huésped 1'
-          }
-        ]
-      }
-
-      // Generar reservas demo para visualización
-      // Solo si no hay reservas del backend
-      if (reservasResultado.length === 0 || !dataReservas.success) {
-        const props = (dataPropiedades.success && dataPropiedades.data.length > 0)
-          ? dataPropiedades.data as Propiedad[]
-          : [
-              { _id: '1', nombre: 'Ayres de Güemes' },
-              { _id: '2', nombre: 'Excelente ubicación Güemes, Luminoso' },
-              { _id: '3', nombre: 'Frente al Mar! Hermosas vistas! Cochera' }
-            ]
-        const demo: Reserva[] = []
-        const diasEnMes = new Date(añoVisor, mesVisor + 1, 0).getDate()
-        
-        // Marcar algunas ocupadas de forma simple para la demo visual
-        if (props[0]) {
-          demo.push({
-            _id: 'demo-1', propiedad: props[0]._id,
-            fechaInicio: new Date(añoVisor, mesVisor, 3).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 6).toISOString().split('T')[0],
+            fechaInicio: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-05`,
+            fechaFin: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-08`,
             precio: 200
-          } as Reserva)
-        }
-        if (props[1]) {
-          demo.push({
-            _id: 'demo-2', propiedad: props[1]._id,
-            fechaInicio: new Date(añoVisor, mesVisor, 12).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 15).toISOString().split('T')[0],
+          },
+          {
+            _id: 'demo-2',
+            propiedad: '2',
+            fechaInicio: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-15`,
+            fechaFin: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-18`,
             precio: 180
-          } as Reserva)
-        }
-        if (props[2]) {
-          demo.push({
-            _id: 'demo-3', propiedad: props[2]._id,
-            fechaInicio: new Date(añoVisor, mesVisor, 22).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 24).toISOString().split('T')[0],
-            precio: 220
-          } as Reserva)
-        }
-        // Agregar ocupaciones en los últimos días del mes para variación
-        if (props[0] && diasEnMes >= 29) {
-          demo.push({
-            _id: 'demo-4', propiedad: props[0]._id,
-            fechaInicio: new Date(añoVisor, mesVisor, 28).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 30).toISOString().split('T')[0],
-            precio: 195
-          } as Reserva)
-        }
-        if (props[2] && diasEnMes >= 30) {
-          demo.push({
-            _id: 'demo-5', propiedad: props[2]._id,
-            fechaInicio: new Date(añoVisor, mesVisor, 29).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 31).toISOString().split('T')[0],
-            precio: 210
-          } as Reserva)
-        }
-        if (props[4] && diasEnMes >= 29) {
-          demo.push({
-            _id: 'demo-6', propiedad: props[4]._id,
-            fechaInicio: new Date(añoVisor, mesVisor, 28).toISOString().split('T')[0],
-            fechaFin: new Date(añoVisor, mesVisor, 29).toISOString().split('T')[0],
-            precio: 175
-          } as Reserva)
-        }
-        reservasResultado = [...reservasResultado, ...demo]
+          }
+        ])
       }
-
-      setReservas(reservasResultado)
     } catch (error) {
       console.error('Error al cargar datos:', error)
       setPropiedades([
@@ -275,30 +212,6 @@ export default function CalendarioPage() {
       scrollRef.current.scrollTo({ left: leftDestino, behavior: 'auto' })
     }, 0)
   }, [mesVisor, añoVisor])
-  
-  // Scroll inicial al día de hoy (una sola vez)
-  useEffect(() => {
-    if (cargando) return
-    if (hasScrolledToTodayRef.current) return
-    
-    const hoy = new Date()
-    const hoyDia = hoy.getDate()
-    const hoyMes = hoy.getMonth()
-    const hoyAño = hoy.getFullYear()
-    
-    if (mesVisor !== hoyMes || añoVisor !== hoyAño) return
-    if (!scrollRef.current) return
-    
-    const cellWidth = 96
-    const left = Math.max(0, (hoyDia - 1) * cellWidth)
-    // Pequeño timeout para asegurar layout listo
-    const id = setTimeout(() => {
-      if (!scrollRef.current) return
-      scrollRef.current.scrollTo({ left, behavior: 'auto' })
-      hasScrolledToTodayRef.current = true
-    }, 0)
-    return () => clearTimeout(id)
-  }, [cargando, mesVisor, añoVisor])
   
   if (cargando) {
     return (
