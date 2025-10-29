@@ -32,6 +32,36 @@ const NOMBRES_MESES = [
 
 const DIAS_NOMBRES_CORTOS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
+const PROPIEDADES_DEMO: Propiedad[] = [
+  { _id: '1', nombre: 'Ayres de Güemes' },
+  { _id: '2', nombre: 'Excelente ubicación Güemes, Luminoso' },
+  { _id: '3', nombre: 'Frente al Mar! Hermosas vistas! Cochera' },
+  { _id: '4', nombre: 'Frente al Mar! Increíbles vistas! Con piscina' },
+  { _id: '5', nombre: 'Hermosas vistas, cálido y luminoso' },
+  { _id: '6', nombre: 'Lo de Vicente' }
+]
+
+const padNumero = (valor: number) => String(valor).padStart(2, '0')
+
+const crearReservasDemo = (año: number, mes: number): Reserva[] => [
+  {
+    _id: 'demo-1',
+    propiedad: '1',
+    fechaInicio: `${año}-${padNumero(mes + 1)}-05`,
+    fechaFin: `${año}-${padNumero(mes + 1)}-08`,
+    precio: 200
+  },
+  {
+    _id: 'demo-2',
+    propiedad: '2',
+    fechaInicio: `${año}-${padNumero(mes + 1)}-15`,
+    fechaFin: `${año}-${padNumero(mes + 1)}-18`,
+    precio: 180
+  }
+]
+
+const MODO_DEMO_CALENDARIO = process.env.NEXT_PUBLIC_CALENDARIO_MODO_DEMO === 'true'
+
 // Parser seguro para 'YYYY-MM-DD' evitando desfases por timezone
 const parseFechaYMD = (value: string) => {
   const ymd = value.slice(0, 10).split('-')
@@ -108,62 +138,60 @@ export default function CalendarioPage() {
 
   const cargarDatos = async () => {
     setCargando(true)
+    const inicioMedicion = performance.now()
     try {
-      // Cargar en paralelo para mayor velocidad
+      if (MODO_DEMO_CALENDARIO) {
+        setPropiedades(PROPIEDADES_DEMO)
+        setReservas(crearReservasDemo(añoVisor, mesVisor))
+        return
+      }
+
+      const fetchWithTimeout = async (url: string, timeoutMs = 800) => {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+        try {
+          return await fetch(url, { signal: controller.signal })
+        } finally {
+          clearTimeout(timeoutId)
+        }
+      }
+
       const [resPropiedades, resReservas] = await Promise.all([
-        fetch('/api/propiedades'),
-        fetch('/api/reservas')
+        fetchWithTimeout('/api/propiedades'),
+        fetchWithTimeout('/api/reservas')
       ])
-      
-      const [dataPropiedades, dataReservas] = await Promise.all([
-        resPropiedades.json(),
-        resReservas.json()
-      ])
-      
-      if (dataPropiedades.success && dataPropiedades.data.length > 0) {
-        setPropiedades(dataPropiedades.data)
-      } else {
-        setPropiedades([
-          { _id: '1', nombre: 'Ayres de Güemes' },
-          { _id: '2', nombre: 'Excelente ubicación Güemes, Luminoso' },
-          { _id: '3', nombre: 'Frente al Mar! Hermosas vistas! Cochera' },
-          { _id: '4', nombre: 'Frente al Mar! Increíbles vistas! Con piscina' },
-          { _id: '5', nombre: 'Hermosas vistas, cálido y luminoso' },
-          { _id: '6', nombre: 'Lo de Vicente' }
-        ])
-      }
-      // Reservas: usar datos reales o fallback simple
-      if (dataReservas.success && dataReservas.data.length > 0) {
-        setReservas(dataReservas.data)
-      } else {
-        // Solo 2 reservas demo ultra-simples
-        setReservas([
-          {
-            _id: 'demo-1',
-            propiedad: '1',
-            fechaInicio: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-05`,
-            fechaFin: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-08`,
-            precio: 200
-          },
-          {
-            _id: 'demo-2',
-            propiedad: '2',
-            fechaInicio: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-15`,
-            fechaFin: `${añoVisor}-${String(mesVisor + 1).padStart(2, '0')}-18`,
-            precio: 180
-          }
-        ])
-      }
+
+      const dataPropiedades: any = resPropiedades.ok ? await resPropiedades.json() : null
+      const dataReservas: any = resReservas.ok ? await resReservas.json() : null
+
+      const propiedadesObtenidas: Propiedad[] =
+        dataPropiedades?.success && Array.isArray(dataPropiedades.data) && dataPropiedades.data.length > 0
+          ? dataPropiedades.data
+          : PROPIEDADES_DEMO
+
+      setPropiedades(propiedadesObtenidas)
+
+      const reservasObtenidas: Reserva[] =
+        dataReservas?.success && Array.isArray(dataReservas.data) && dataReservas.data.length > 0
+          ? dataReservas.data
+          : Array.isArray(dataReservas?.reservas) && dataReservas.reservas.length > 0
+            ? dataReservas.reservas
+            : crearReservasDemo(añoVisor, mesVisor)
+
+      setReservas(reservasObtenidas)
     } catch (error) {
-      console.error('Error al cargar datos:', error)
-      setPropiedades([
-        { _id: '1', nombre: 'Ayres de Güemes' },
-        { _id: '2', nombre: 'Excelente ubicación Güemes, Luminoso' },
-        { _id: '3', nombre: 'Frente al Mar! Hermosas vistas! Cochera' }
-      ])
-      setReservas([])
+      const isAbort = error instanceof DOMException && error.name === 'AbortError'
+      if (isAbort) {
+        console.warn('[Calendario] Peticiones abortadas por timeout. Usando datos demo')
+      } else {
+        console.error('Error al cargar datos:', error)
+      }
+      setPropiedades(PROPIEDADES_DEMO)
+      setReservas(crearReservasDemo(añoVisor, mesVisor))
     } finally {
       setCargando(false)
+      const duracion = performance.now() - inicioMedicion
+      console.log(`[Calendario] cargarDatos tomó ${duracion.toFixed(1)} ms`)
     }
   }
 
