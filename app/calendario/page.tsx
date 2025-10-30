@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { IoAdd, IoPencil, IoTrash } from 'react-icons/io5'
+import { useModal } from '@/contexts/ModalContext'
+import AlojamientoModal from '@/components/AlojamientoModal'
 
 // Tipos de datos
 interface Propiedad {
@@ -82,6 +85,9 @@ export default function CalendarioPage() {
   const [colWidth, setColWidth] = useState<number>(160) // ancho en px de la columna de Alojamientos
   const [mostrarAjusteColumna, setMostrarAjusteColumna] = useState<boolean>(false)
   const ajusteRef = useRef<HTMLDivElement>(null)
+  const { setIsModalOpen: setGlobalModalOpen } = useModal()
+  const [isAlojModalOpen, setIsAlojModalOpen] = useState(false)
+  const [propEnEdicion, setPropEnEdicion] = useState<Propiedad | null>(null)
 
   // Cerrar panel de ajuste al hacer click fuera
   useEffect(() => {
@@ -95,6 +101,12 @@ export default function CalendarioPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [mostrarAjusteColumna])
+
+  // Sincronizar estado local de modal con contexto global para desactivar BottomNav
+  useEffect(() => {
+    setGlobalModalOpen(isAlojModalOpen)
+    return () => setGlobalModalOpen(false)
+  }, [isAlojModalOpen, setGlobalModalOpen])
 
   // Solo generar días del mes actual visible (máximo 31 días)
   const diasDelMes = useMemo(() => {
@@ -209,6 +221,32 @@ export default function CalendarioPage() {
       const duracion = performance.now() - inicioMedicion
       console.log(`[Calendario] cargarDatos tomó ${duracion.toFixed(1)} ms`)
     }
+  }
+
+  // Handlers CRUD Alojamientos
+  const abrirNuevoAlojamiento = () => {
+    setPropEnEdicion(null)
+    setIsAlojModalOpen(true)
+  }
+
+  const abrirEditarAlojamiento = (prop: Propiedad) => {
+    setPropEnEdicion(prop)
+    setIsAlojModalOpen(true)
+  }
+
+  const guardarAlojamiento = (data: { nombre: string; direccion?: string }) => {
+    if (propEnEdicion) {
+      setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion } : p)))
+    } else {
+      const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion }
+      setPropiedades((prev) => [nuevo, ...prev])
+    }
+  }
+
+  const eliminarAlojamiento = (id: string) => {
+    setPropiedades((prev) => prev.filter((p) => p._id !== id))
+    // Opcional: limpiar reservas asociadas para evitar trabajo innecesario
+    setReservas((prev) => prev.filter((r) => r.propiedad !== id))
   }
 
   // Chequeo O(1) usando el índice
@@ -334,12 +372,30 @@ export default function CalendarioPage() {
 
           {/* Filas de propiedades */}
           {propiedades.map((propiedad) => (
-            <div key={propiedad._id} className="flex border-b border-gray-800 hover:bg-gray-900/30 transition-colors">
+            <div key={propiedad._id} className="group flex border-b border-gray-800 hover:bg-gray-900/30 transition-colors">
               {/* Nombre de la propiedad (columna fija) */}
               <div className="flex-shrink-0 sticky left-0 bg-black z-20 border-r border-gray-700" style={{ width: colWidth }}>
-                <div className="h-14 flex items-center px-4">
-                  <div className="text-sm font-medium text-white truncate">
+                <div className="h-14 flex items-center px-4 gap-2">
+                  <div className="text-sm font-medium text-white truncate flex-1">
                     {propiedad.nombre}
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => abrirEditarAlojamiento(propiedad)}
+                      className="p-1.5 rounded-md hover:bg-gray-800 text-gray-300"
+                      title="Editar"
+                    >
+                      <IoPencil className="text-[18px]" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => eliminarAlojamiento(propiedad._id)}
+                      className="p-1.5 rounded-md hover:bg-gray-800 text-rose-400"
+                      title="Eliminar"
+                    >
+                      <IoTrash className="text-[18px]" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -404,6 +460,24 @@ export default function CalendarioPage() {
           </div>
         </div>
       </div>
+      {/* Botón flotante para agregar alojamiento */}
+      <button
+        onClick={abrirNuevoAlojamiento}
+        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-40"
+        title="Agregar alojamiento"
+      >
+        <IoAdd className="text-3xl" />
+      </button>
+
+      {/* Modal de Alojamiento (crear/editar) */}
+      <AlojamientoModal
+        isOpen={isAlojModalOpen}
+        onClose={() => setIsAlojModalOpen(false)}
+        onSubmit={guardarAlojamiento}
+        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion } : undefined}
+        mode={propEnEdicion ? 'edit' : 'create'}
+        onDelete={propEnEdicion ? () => { eliminarAlojamiento(propEnEdicion._id); setIsAlojModalOpen(false) } : undefined}
+      />
     </main>
   )
 }
