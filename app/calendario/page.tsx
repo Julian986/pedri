@@ -88,6 +88,7 @@ export default function CalendarioPage() {
   const { setIsModalOpen: setGlobalModalOpen } = useModal()
   const [isAlojModalOpen, setIsAlojModalOpen] = useState(false)
   const [propEnEdicion, setPropEnEdicion] = useState<Propiedad | null>(null)
+  const [filaAccionesActiva, setFilaAccionesActiva] = useState<string | null>(null)
 
   // Cerrar panel de ajuste al hacer click fuera
   useEffect(() => {
@@ -376,27 +377,34 @@ export default function CalendarioPage() {
               {/* Nombre de la propiedad (columna fija) */}
               <div className="flex-shrink-0 sticky left-0 bg-black z-20 border-r border-gray-700" style={{ width: colWidth }}>
                 <div className="h-14 flex items-center px-4 gap-2">
-                  <div className="text-sm font-medium text-white truncate flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setFilaAccionesActiva(filaAccionesActiva === propiedad._id ? null : propiedad._id)}
+                    className="text-sm font-medium text-white truncate flex-1 text-left"
+                    title="Mostrar acciones"
+                  >
                     {propiedad.nombre}
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={() => abrirEditarAlojamiento(propiedad)}
-                      className="p-1.5 rounded-md hover:bg-gray-800 text-gray-300"
-                      title="Editar"
-                    >
-                      <IoPencil className="text-[18px]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminarAlojamiento(propiedad._id)}
-                      className="p-1.5 rounded-md hover:bg-gray-800 text-rose-400"
-                      title="Eliminar"
-                    >
-                      <IoTrash className="text-[18px]" />
-                    </button>
-                  </div>
+                  </button>
+                  {filaAccionesActiva === propiedad._id && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => abrirEditarAlojamiento(propiedad)}
+                        className="p-1.5 rounded-md hover:bg-gray-800 text-gray-300"
+                        title="Editar"
+                      >
+                        <IoPencil className="text-[18px]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => eliminarAlojamiento(propiedad._id)}
+                        className="p-1.5 rounded-md hover:bg-gray-800 text-rose-400"
+                        title="Eliminar"
+                      >
+                        <IoTrash className="text-[18px]" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               

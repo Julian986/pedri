@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IoClose, IoRefreshOutline } from 'react-icons/io5'
+import { IoClose, IoRefreshOutline, IoChevronDown } from 'react-icons/io5'
 import RangeDatePicker from './RangeDatePicker'
 import { z } from 'zod'
 
@@ -19,6 +19,7 @@ export interface ReservationFormData {
   telefono: string
   total: string
   sena: string
+  plataforma: '' | 'Airbnb' | 'Booking' | 'Particular'
 }
 
 // Schema de validación con Zod
@@ -30,6 +31,13 @@ const reservationSchema = z.object({
   telefono: z.string().min(1, 'El teléfono es requerido'),
   total: z.string().min(1, 'El total es requerido'),
   sena: z.string().min(1, 'La seña es requerida'),
+  // Validación en dos pasos para controlar mensajes en español
+  plataforma: z
+    .string()
+    .min(1, 'La plataforma es requerida')
+    .refine((v) => ['Airbnb', 'Booking', 'Particular'].includes(v), {
+      message: 'La plataforma no es válida',
+    }),
 })
 
 export default function ReservationModal({ isOpen, onClose, onSubmit }: ReservationModalProps) {
@@ -41,6 +49,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
     telefono: '',
     total: '',
     sena: '',
+    plataforma: '',
   })
   
   const [errors, setErrors] = useState<Partial<Record<keyof ReservationFormData, string>>>({})
@@ -60,7 +69,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
     }
   }, [isOpen])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData({
       ...formData,
@@ -104,6 +113,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
       telefono: '',
       total: '',
       sena: '',
+      plataforma: '',
     })
     setErrors({})
     setTouched({})
@@ -225,6 +235,32 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
                   : 'border-gray-700 focus:border-blue-500'
               }`}
             />
+          </div>
+
+          {/* Plataforma */}
+          <div>
+            <div className="relative">
+              <IoChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <select
+                name="plataforma"
+                value={formData.plataforma}
+                onChange={handleChange}
+                onBlur={() => handleBlur('plataforma')}
+                className={`w-full bg-gray-800 border rounded-lg py-3 pr-4 pl-10 focus:outline-none appearance-none ${
+                  touched.plataforma && errors.plataforma 
+                    ? 'border-red-500' 
+                    : 'border-gray-700 focus:border-blue-500'
+                } ${formData.plataforma === '' ? 'text-gray-400' : 'text-white'}`}
+              >
+                <option value="" disabled hidden>Plataforma</option>
+                <option value="Airbnb">Airbnb</option>
+                <option value="Booking">Booking</option>
+                <option value="Particular">Particular</option>
+              </select>
+            </div>
+            {touched.plataforma && errors.plataforma && (
+              <p className="text-red-500 text-xs mt-1 px-1">{errors.plataforma}</p>
+            )}
           </div>
 
           {/* Huésped */}
