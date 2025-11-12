@@ -450,29 +450,34 @@ export default function CalendarioPage() {
                 </div>
               )}
             </div>
-            <div className="inline-flex items-center bg-black/50 backdrop-blur-sm rounded-lg border border-gray-800">
-              <button
-                type="button"
-                onClick={() => cambiarMes('anterior')}
-                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-l-lg border-r border-gray-800"
-                title="Mes anterior"
-                aria-label="Mes anterior"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => cambiarMes('siguiente')}
-                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-r-lg"
-                title="Mes siguiente"
-                aria-label="Mes siguiente"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+            <div className="flex flex-col items-end">
+              <div className="relative inline-flex items-center bg-black/50 backdrop-blur-sm rounded-lg border border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => cambiarMes('anterior')}
+                  className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-l-lg border-r border-gray-800"
+                  title="Mes anterior"
+                  aria-label="Mes anterior"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cambiarMes('siguiente')}
+                  className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-r-lg"
+                  title="Mes siguiente"
+                  aria-label="Mes siguiente"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                {/* Línea amarilla luminosa, centrada entre ambas flechas */}
+                <div className="pointer-events-none absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-0.5 w-7 rounded-full bg-yellow-400 opacity-95 ring-1 ring-yellow-300/40 shadow-[0_0_10px_#ffea00] drop-shadow-[0_0_6px_#ffea00]"></div>
+                <div className="pointer-events-none absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 w-12 -z-10 bg-yellow-400/35 blur-md rounded-full"></div>
+              </div>
             </div>
           </div>
         </div>
