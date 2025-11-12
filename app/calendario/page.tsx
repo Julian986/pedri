@@ -262,6 +262,8 @@ export default function CalendarioPage() {
   }
 
   const cambiarMes = useCallback((direccion: 'anterior' | 'siguiente') => {
+    // Recordar posición actual solo por seguridad (no se usará para el destino)
+    const _prevScrollLeft = scrollRef.current ? scrollRef.current.scrollLeft : 0
     let nuevoMes = mesVisor
     let nuevoAño = añoVisor
     
@@ -284,15 +286,14 @@ export default function CalendarioPage() {
     setMesVisor(nuevoMes)
     setAñoVisor(nuevoAño)
 
-    // Ajustar scroll horizontal: siguiente => día 1; anterior => último día
-    const cellWidth = 96
-    const diasEnMesDestino = new Date(nuevoAño, nuevoMes + 1, 0).getDate()
-    const leftDestino = direccion === 'siguiente' ? 0 : Math.max(0, (diasEnMesDestino - 1) * cellWidth)
-
-    // Ejecutar tras el re-render del nuevo mes
+    // Ejecutar tras el re-render del nuevo mes y posicionar scroll según UX:
+    // siguiente => inicio (día 1); anterior => final (último día)
     setTimeout(() => {
-      if (!scrollRef.current) return
-      scrollRef.current.scrollTo({ left: leftDestino, behavior: 'auto' })
+      const el = scrollRef.current
+      if (!el) return
+      const maxScrollable = Math.max(0, el.scrollWidth - el.clientWidth)
+      const leftDestino = direccion === 'siguiente' ? 0 : maxScrollable
+      el.scrollTo({ left: leftDestino, behavior: 'auto' })
     }, 0)
   }, [mesVisor, añoVisor])
   
@@ -314,29 +315,11 @@ export default function CalendarioPage() {
     <main className="min-h-screen bg-black text-white flex flex-col pb-16 md:pb-0">
       {/* Header con navegación de mes */}
       <div className="sticky top-0 bg-black z-10">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => cambiarMes('anterior')}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
+        <div className="flex items-center justify-center px-4 py-3">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{NOMBRES_MESES[mesVisor]}</h2>
             <span className="text-sm text-gray-400">{añoVisor}</span>
           </div>
-          
-          <button
-            onClick={() => cambiarMes('siguiente')}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -441,30 +424,56 @@ export default function CalendarioPage() {
             </div>
           )}
         </div>
-        {/* Control pegado abajo-izquierda para ajustar ancho de columna */}
-        <div className="sticky left-0 bottom-0 z-40 p-2">
-          <div ref={ajusteRef} className="inline-flex flex-col items-start bg-black/50 backdrop-blur-sm rounded-lg border border-gray-800">
-            <button
-              type="button"
-              onClick={() => setMostrarAjusteColumna((v) => !v)}
-              className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-t-lg"
-              title="Ajustar ancho de la columna de Alojamientos"
-            >
-              Ajustar columna
-            </button>
-            {mostrarAjusteColumna && (
-              <div className="w-[220px] max-w-[70vw] px-3 pb-3">
-                <div className="text-[11px] text-gray-400 mb-2">Ancho: {Math.round(colWidth)} px</div>
-                <input
-                  type="range"
-                  min={80}
-                  max={320}
-                  value={colWidth}
-                  onChange={(e) => setColWidth(parseInt(e.target.value, 10))}
-                  className="w-full accent-blue-500"
-                />
-              </div>
-            )}
+        {/* Barra inferior dentro del contenedor: izquierda Ajustar columna, derecha flechas */}
+        <div className="sticky bottom-0 left-0 z-40 p-2 w-full">
+          <div className="flex items-start justify-between">
+            <div ref={ajusteRef} className="inline-flex flex-col items-start bg-black/50 backdrop-blur-sm rounded-lg border border-gray-800">
+              <button
+                type="button"
+                onClick={() => setMostrarAjusteColumna((v) => !v)}
+                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-t-lg"
+                title="Ajustar ancho de la columna de Alojamientos"
+              >
+                Ajustar columna
+              </button>
+              {mostrarAjusteColumna && (
+                <div className="w-[220px] max-w-[70vw] px-3 pb-3">
+                  <div className="text-[11px] text-gray-400 mb-2">Ancho: {Math.round(colWidth)} px</div>
+                  <input
+                    type="range"
+                    min={80}
+                    max={320}
+                    value={colWidth}
+                    onChange={(e) => setColWidth(parseInt(e.target.value, 10))}
+                    className="w-full accent-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="inline-flex items-center bg-black/50 backdrop-blur-sm rounded-lg border border-gray-800">
+              <button
+                type="button"
+                onClick={() => cambiarMes('anterior')}
+                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-l-lg border-r border-gray-800"
+                title="Mes anterior"
+                aria-label="Mes anterior"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => cambiarMes('siguiente')}
+                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 rounded-r-lg"
+                title="Mes siguiente"
+                aria-label="Mes siguiente"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
