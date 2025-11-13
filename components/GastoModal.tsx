@@ -39,12 +39,17 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
   const [mesPickerYear, setMesPickerYear] = useState<number>(now.getFullYear())
 
   const TIPO_OPCIONES = [
-    'Mantenimiento',
-    'Limpieza',
-    'Servicios',
-    'Reparación',
-    'Impuestos',
-    'Otro'
+    'Comisión Plataforma',
+    'Publicidad',
+    'Producto Limpieza',
+    'Reparaciones',
+    'Regalos Huéspedes',
+    'Wifi',
+    'Cable',
+    'Seguro',
+    'Sueldo',
+    'Otros',
+    'Cosas'
   ]
 
   const PROPIEDAD_OPCIONES = [

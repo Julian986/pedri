@@ -19,7 +19,7 @@ export interface ReservationFormData {
   telefono: string
   total: string
   sena: string
-  plataforma: '' | 'Airbnb' | 'Booking' | 'Particular'
+  plataforma: '' | 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Otro'
 }
 
 // Schema de validación con Zod
@@ -35,7 +35,7 @@ const reservationSchema = z.object({
   plataforma: z
     .string()
     .min(1, 'La plataforma es requerida')
-    .refine((v) => ['Airbnb', 'Booking', 'Particular'].includes(v), {
+    .refine((v) => ['Airbnb', 'Booking', 'Facebook', 'Mercado Libre', 'Recomendado', 'Otro'].includes(v), {
       message: 'La plataforma no es válida',
     }),
 })
@@ -54,6 +54,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
   
   const [errors, setErrors] = useState<Partial<Record<keyof ReservationFormData, string>>>({})
   const [touched, setTouched] = useState<Partial<Record<keyof ReservationFormData, boolean>>>({})
+  const [openPlataforma, setOpenPlataforma] = useState(false)
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -117,6 +118,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
     })
     setErrors({})
     setTouched({})
+    setOpenPlataforma(false)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -159,6 +161,10 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
   }
 
   if (!isOpen) return null
+
+  const PLATAFORMA_OPCIONES: ReservationFormData['plataforma'][] = [
+    'Airbnb','Booking','Facebook','Mercado Libre','Recomendado','Otro'
+  ]
 
   return (
     <div 
@@ -238,26 +244,40 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
           </div>
 
           {/* Plataforma */}
-          <div>
-            <div className="relative">
+          <div className="relative">
+            <label className="sr-only">Plataforma</label>
+            <button
+              type="button"
+              onClick={() => setOpenPlataforma((v) => !v)}
+              onBlur={() => setTouched({ ...touched, plataforma: true })}
+              className={`relative w-full bg-gray-800 border rounded-lg pl-10 pr-4 py-3 text-left transition-all ${
+                touched.plataforma && errors.plataforma ? 'border-red-500' : 'border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              }`}
+            >
               <IoChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              <select
-                name="plataforma"
-                value={formData.plataforma}
-                onChange={handleChange}
-                onBlur={() => handleBlur('plataforma')}
-                className={`w-full bg-gray-800 border rounded-lg py-3 pr-4 pl-10 focus:outline-none appearance-none ${
-                  touched.plataforma && errors.plataforma 
-                    ? 'border-red-500' 
-                    : 'border-gray-700 focus:border-blue-500'
-                } ${formData.plataforma === '' ? 'text-gray-400' : 'text-white'}`}
-              >
-                <option value="" disabled hidden>Plataforma</option>
-                <option value="Airbnb">Airbnb</option>
-                <option value="Booking">Booking</option>
-                <option value="Particular">Particular</option>
-              </select>
-            </div>
+              <span className={`text-sm ${formData.plataforma ? 'text-gray-200' : 'text-gray-400'}`}>
+                {formData.plataforma || 'Plataforma'}
+              </span>
+            </button>
+            {openPlataforma && (
+              <div className="absolute left-0 right-0 top-full mt-2 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+                {PLATAFORMA_OPCIONES.map((op) => (
+                  <button
+                    key={op}
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, plataforma: op });
+                      setErrors({ ...errors, plataforma: undefined });
+                      setTouched({ ...touched, plataforma: true });
+                      setOpenPlataforma(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-white hover:bg-gray-800"
+                  >
+                    {op}
+                  </button>
+                ))}
+              </div>
+            )}
             {touched.plataforma && errors.plataforma && (
               <p className="text-red-500 text-xs mt-1 px-1">{errors.plataforma}</p>
             )}
