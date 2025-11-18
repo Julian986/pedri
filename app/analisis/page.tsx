@@ -116,7 +116,7 @@ export default function AnalisisPage() {
   const demoGananciaProp = useMemo(
     () => baseGananciaProp.map((g) => ({ ...g, ganancia: Math.max(0, Math.round(g.ganancia * factors.ingresos - 0)) })),
     [baseGananciaProp, factors]
-  );
+  ); 
 
   const detalleProp = useMemo(() => {
     return baseDetalleProp.map((r) => {
