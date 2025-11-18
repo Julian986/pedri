@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Reserva {
   id: string
@@ -56,6 +56,21 @@ const reservasEjemplo: Reserva[] = [
 
 export default function ReservasPage() {
   const [reservas] = useState<Reserva[]>(reservasEjemplo)
+  const [openFiltro, setOpenFiltro] = useState(false)
+  const [propiedadFiltro, setPropiedadFiltro] = useState<string>('Todas')
+  const propiedades = Array.from(new Set(reservas.map(r => r.propiedad)))
+  const filtroRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (openFiltro && filtroRef.current && !filtroRef.current.contains(target)) {
+        setOpenFiltro(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openFiltro])
 
   const formatearFecha = (fecha: string) => {
     const date = new Date(fecha)
@@ -92,9 +107,45 @@ export default function ReservasPage() {
           <p className="text-sm text-gray-400">Registro de todas las reservas</p>
         </div>
 
+        {/* Filtros */}
+        <div className="mb-4 flex items-center justify-between">
+          <div ref={filtroRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenFiltro((v) => !v)}
+              className="bg-gray-900/70 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white hover:bg-gray-800 min-w-[180px] text-left"
+            >
+              {`Propiedad: ${propiedadFiltro}`}
+            </button>
+            {openFiltro && (
+              <div className="absolute left-0 top-full mt-2 w-60 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => { setPropiedadFiltro('Todas'); setOpenFiltro(false) }}
+                  className={`w-full text-left px-3 py-2 text-sm ${propiedadFiltro === 'Todas' ? 'bg-gray-800 text-white' : 'text-gray-200 hover:bg-gray-800'}`}
+                >
+                  Todas
+                </button>
+                {propiedades.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => { setPropiedadFiltro(p); setOpenFiltro(false) }}
+                    className={`w-full text-left px-3 py-2 text-sm ${propiedadFiltro === p ? 'bg-gray-800 text-white' : 'text-gray-200 hover:bg-gray-800'}`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Lista de reservas */}
         <div className="space-y-4">
-          {reservas.map((reserva) => (
+          {reservas
+            .filter((r) => propiedadFiltro === 'Todas' ? true : r.propiedad === propiedadFiltro)
+            .map((reserva) => (
             <div
               key={reserva.id}
               className="bg-gray-900/50 border border-gray-800 rounded-lg p-4"

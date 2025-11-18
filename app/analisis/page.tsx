@@ -34,8 +34,8 @@ export default function AnalisisPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMonth, openYear]);
 
-  // Datos ficticios (demo)
-  const demoOrigen = [
+  // Datos base (demo)
+  const baseOrigen = [
     { origen: 'Airbnb', count: 35 },
     { origen: 'Booking', count: 28 },
     { origen: 'Facebook', count: 12 },
@@ -44,7 +44,7 @@ export default function AnalisisPage() {
     { origen: 'Otro', count: 7 },
   ];
 
-  const demoGastos = [
+  const baseGastos = [
     { categoria: 'Comisión Plataforma', total: 210000 },
     { categoria: 'Publicidad', total: 45000 },
     { categoria: 'Producto Limpieza', total: 129893.71 },
@@ -58,7 +58,7 @@ export default function AnalisisPage() {
     { categoria: 'Cosas', total: 33705 },
   ];
 
-  const demoGananciaProp = [
+  const baseGananciaProp = [
     { propiedad: 'MARICARMEN', ganancia: 1961985 },
     { propiedad: 'VICENTE', ganancia: 1391055 },
     { propiedad: 'CHIQUITO', ganancia: 1113050 },
@@ -66,7 +66,7 @@ export default function AnalisisPage() {
   ];
 
   // Detalle por propiedad (demo)
-  const detalleProp = useMemo(() => {
+  const baseDetalleProp = useMemo(() => {
     // Tomo números aproximados de las capturas y cierro consistencia:
     const base = [
       { propiedad: 'MARICARMEN', ingresos: 2748000, comisiones: 786015, gastos: 79422 },
@@ -74,23 +74,75 @@ export default function AnalisisPage() {
       { propiedad: 'CHIQUITO', ingresos: 4191000, comisiones: 2077950, gastos: 95875 },
       { propiedad: 'YESO', ingresos: 4206000, comisiones: 1184850, gastos: 89882 },
     ];
-    return base.map((r) => {
-      const propietarios = Math.max(0, r.ingresos - r.comisiones);
-      const ganancia = Math.max(0, r.ingresos - propietarios - r.gastos); // equivalente a comisiones - gastos
-      const margen = r.ingresos > 0 ? ganancia / r.ingresos : 0;
-      return { ...r, propietarios, ganancia, margen };
-    });
+    return base;
   }, []);
 
+  // Factor de escala según mes/año (solo demo)
+  const factors = useMemo(() => {
+    const monthScale = [0.95, 0.96, 0.98, 1.0, 1.02, 1.05, 1.07, 1.06, 1.04, 1.03, 1.0, 0.97];
+    const yearScale = 0.97 + (selectedYear % 5) * 0.01;
+    const f = (modo === 'mes' ? monthScale[selectedMonth] : 1.0) * yearScale;
+    return {
+      origen: f,
+      gastos: f * 0.98,
+      ingresos: f * 1.02,
+      comisiones: f * 1.0,
+      propietarios: f * 1.01,
+    };
+  }, [modo, selectedMonth, selectedYear]);
+
+  // Datos derivados que reaccionan al filtro
+  const demoOrigen = useMemo(() => {
+    const month = selectedMonth;
+    const yearMult = modo === 'año' ? 12 : 1; // año = acumulado simple en demo
+    return baseOrigen.map((d, idx) => {
+      // variación por mes y categoría para que cambie la composición
+      const wiggle = 1 + 0.18 * Math.sin((month + 1 + idx * 2) * 0.8);
+      const value = Math.round(d.count * factors.origen * wiggle) * yearMult;
+      return { ...d, count: Math.max(0, value) };
+    });
+  }, [baseOrigen, factors, modo, selectedMonth]);
+
+  const demoGastos = useMemo(() => {
+    const month = selectedMonth;
+    const yearMult = modo === 'año' ? 12 : 1; // año = acumulado simple en demo
+    return baseGastos.map((g, idx) => {
+      const wiggle = 1 + 0.15 * Math.cos((month + 1 + idx) * 0.7);
+      const value = Math.round(g.total * factors.gastos * wiggle) * yearMult;
+      return { ...g, total: Math.max(0, value) };
+    });
+  }, [baseGastos, factors, modo, selectedMonth]);
+
+  const demoGananciaProp = useMemo(
+    () => baseGananciaProp.map((g) => ({ ...g, ganancia: Math.max(0, Math.round(g.ganancia * factors.ingresos - 0)) })),
+    [baseGananciaProp, factors]
+  );
+
+  const detalleProp = useMemo(() => {
+    return baseDetalleProp.map((r) => {
+      const ingresos = Math.round(r.ingresos * factors.ingresos);
+      const comisiones = Math.round(r.comisiones * factors.comisiones);
+      const gastos = Math.round(r.gastos * factors.gastos);
+      const propietarios = Math.max(0, ingresos - comisiones);
+      const ganancia = Math.max(0, ingresos - propietarios - gastos); // equivalente a comisiones - gastos
+      const margen = ingresos > 0 ? ganancia / ingresos : 0;
+      return { propiedad: r.propiedad, ingresos, comisiones, gastos, propietarios, ganancia, margen };
+    });
+  }, [baseDetalleProp, factors]);
+
   const kpis = useMemo(() => {
-    const ingresos = 12862850;
-    const comisiones = 4375649;
-    const propietarios = 7983973;
-    const gastos = 315536;
+    const ingresosBase = 12862850;
+    const comisionesBase = 4375649;
+    const propietariosBase = 7983973;
+    const gastosBase = 315536;
+    const ingresos = Math.round(ingresosBase * factors.ingresos);
+    const comisiones = Math.round(comisionesBase * factors.comisiones);
+    const propietarios = Math.round(propietariosBase * factors.propietarios);
+    const gastos = Math.round(gastosBase * factors.gastos);
     const ganancia = ingresos - propietarios - gastos;
     const margen = ingresos ? ganancia / ingresos : 0;
     return { ingresos, comisiones, propietarios, gastos, ganancia, margen };
-  }, []);
+  }, [factors]);
 
   const formatARS = (n: number) =>
     n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -128,9 +180,9 @@ export default function AnalisisPage() {
     <main className="min-h-screen bg-black px-4 py-6">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl text-white font-semibold">Análisis</h1>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-400 whitespace-nowrap overflow-hidden text-ellipsis">
               {modo === 'mes'
                 ? `Mes: ${monthNames[selectedMonth]} ${selectedYear}`
                 : `Año: ${selectedYear}`} · Actualizado {new Date().toLocaleDateString('es-AR')}
@@ -139,7 +191,7 @@ export default function AnalisisPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={exportCSV}
-              className="px-3 py-2 text-xs font-medium bg-zinc-900 text-white rounded-lg border border-zinc-800 hover:bg-zinc-800"
+              className="px-3 py-2 text-xs font-medium bg-zinc-900 text-white rounded-lg border border-zinc-800 hover:bg-zinc-800 whitespace-nowrap"
             >
               Exportar CSV
             </button>
