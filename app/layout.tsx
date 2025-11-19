@@ -9,8 +9,32 @@ import { Analytics } from '@vercel/analytics/react'
 export const metadata: Metadata = {
   title: 'Pedri',
   description: 'Software hecho a medida',
+  metadataBase: new URL('https://pedri.vercel.app'),
   manifest: '/manifest.json',
   themeColor: '#000000',
+  openGraph: {
+    title: 'Pedri',
+    description: 'Software hecho a medida',
+    url: 'https://pedri.vercel.app',
+    siteName: 'Pedri',
+    images: [
+      {
+        url: '/icon-512x512.png',
+        width: 512,
+        height: 512,
+        alt: 'Pedri',
+      },
+    ],
+    locale: 'es_AR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pedri',
+    description: 'Software hecho a medida',
+    images: ['/icon-512x512.png'],
+    creator: '@pedri',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
