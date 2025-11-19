@@ -19,9 +19,9 @@ export const metadata: Metadata = {
     siteName: 'Pedri',
     images: [
       {
-        url: '/icon-512x512.png',
-        width: 512,
-        height: 512,
+        url: 'https://res.cloudinary.com/dzoupwn0e/image/upload/v1763511701/logo_4_zmpqjk.webp',
+        width: 1200,
+        height: 630,
         alt: 'Pedri',
       },
     ],
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Pedri',
     description: 'Software hecho a medida',
-    images: ['/icon-512x512.png'],
+    images: ['https://res.cloudinary.com/dzoupwn0e/image/upload/v1763511701/logo_4_zmpqjk.webp'],
     creator: '@pedri',
   },
   appleWebApp: {
