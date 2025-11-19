@@ -59,6 +59,23 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        {/* Favicon (logo) para la pestaña del navegador */}
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="https://res.cloudinary.com/dzoupwn0e/image/upload/f_png/v1763511701/logo_4_zmpqjk.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="https://res.cloudinary.com/dzoupwn0e/image/upload/f_png/v1763511701/logo_4_zmpqjk.png"
+        />
+        <link
+          rel="shortcut icon"
+          href="https://res.cloudinary.com/dzoupwn0e/image/upload/f_png/v1763511701/logo_4_zmpqjk.png"
+        />
       </head>
       <body>
         <ModalProvider>
