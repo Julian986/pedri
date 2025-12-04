@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Propiedad from '@/models/Propiedad';
-import { requireAuth } from '@/lib/middleware';
+
 
 // GET - Obtener una propiedad por ID
 export async function GET(
@@ -11,8 +11,7 @@ export async function GET(
   try {
     await dbConnect();
 
-    const propiedad = await Propiedad.findById(params.id)
-      .populate('duenoId', 'nombre email telefono');
+    const propiedad = await Propiedad.findById(params.id);
 
     if (!propiedad) {
       return NextResponse.json(
@@ -37,11 +36,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-
     await dbConnect();
 
     const data = await request.json();
@@ -75,11 +69,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-
     await dbConnect();
 
     const propiedad = await Propiedad.findByIdAndUpdate(

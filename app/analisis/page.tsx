@@ -1,11 +1,9 @@
 "use client";
 
-import dynamic from 'next/dynamic';
 import { useMemo, useState, useRef, useEffect } from 'react';
-
-const PieOrigen = dynamic(() => import('@/components/charts/PieOrigen'), { ssr: false });
-const PieGastos = dynamic(() => import('@/components/charts/PieGastos'), { ssr: false });
-const BarGananciaPropiedad = dynamic(() => import('@/components/charts/BarGananciaPropiedad'), { ssr: false });
+import PieOrigen from '@/components/charts/PieOrigen';
+import PieGastos from '@/components/charts/PieGastos';
+import BarGananciaPropiedad from '@/components/charts/BarGananciaPropiedad';
 
 export default function AnalisisPage() {
   // Periodo por defecto: mes actual
@@ -34,115 +32,57 @@ export default function AnalisisPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMonth, openYear]);
 
-  // Datos base (demo)
-  const baseOrigen = [
-    { origen: 'Airbnb', count: 35 },
-    { origen: 'Booking', count: 28 },
-    { origen: 'Facebook', count: 12 },
-    { origen: 'Mercado Libre', count: 8 },
-    { origen: 'Recomendado', count: 10 },
-    { origen: 'Otro', count: 7 },
-  ];
+  // Datos reales
+  const [dataOrigen, setDataOrigen] = useState<Array<{ origen: string; count: number }>>([])
+  const [dataGastosCat, setDataGastosCat] = useState<Array<{ categoria: string; total: number }>>([])
+  const [dataGananciaProp, setDataGananciaProp] = useState<Array<{ propiedad: string; ganancia: number }>>([])
+  const [detalleProp, setDetalleProp] = useState<Array<{ propiedad: string; ingresos: number; comisiones: number; propietarios: number; gastos: number; ganancia: number; margen: number }>>([])
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const baseGastos = [
-    { categoria: 'Comisión Plataforma', total: 210000 },
-    { categoria: 'Publicidad', total: 45000 },
-    { categoria: 'Producto Limpieza', total: 129893.71 },
-    { categoria: 'Reparaciones', total: 18332 },
-    { categoria: 'Regalos Huéspedes', total: 8000 },
-    { categoria: 'Wifi', total: 25000 },
-    { categoria: 'Cable', total: 12000 },
-    { categoria: 'Seguro', total: 18000 },
-    { categoria: 'Sueldo', total: 95000 },
-    { categoria: 'Otros', total: 98210 },
-    { categoria: 'Cosas', total: 33705 },
-  ];
+  const computeRange = () => {
+    if (modo === 'mes') {
+      const from = new Date(selectedYear, selectedMonth, 1, 0, 0, 0, 0);
+      const to = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+      return { from: from.toISOString(), to: to.toISOString() };
+    } else {
+      const from = new Date(selectedYear, 0, 1, 0, 0, 0, 0);
+      const to = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+      return { from: from.toISOString(), to: to.toISOString() };
+    }
+  }
 
-  const baseGananciaProp = [
-    { propiedad: 'MARICARMEN', ganancia: 1961985 },
-    { propiedad: 'VICENTE', ganancia: 1391055 },
-    { propiedad: 'CHIQUITO', ganancia: 1113050 },
-    { propiedad: 'YESO', ganancia: 1029150 },
-  ];
-
-  // Detalle por propiedad (demo)
-  const baseDetalleProp = useMemo(() => {
-    // Tomo números aproximados de las capturas y cierro consistencia:
-    const base = [
-      { propiedad: 'MARICARMEN', ingresos: 2748000, comisiones: 786015, gastos: 79422 },
-      { propiedad: 'VICENTE', ingresos: 1717850, comisiones: 326834, gastos: 20536 },
-      { propiedad: 'CHIQUITO', ingresos: 4191000, comisiones: 2077950, gastos: 95875 },
-      { propiedad: 'YESO', ingresos: 4206000, comisiones: 1184850, gastos: 89882 },
-    ];
-    return base;
-  }, []);
-
-  // Factor de escala según mes/año (solo demo)
-  const factors = useMemo(() => {
-    const monthScale = [0.95, 0.96, 0.98, 1.0, 1.02, 1.05, 1.07, 1.06, 1.04, 1.03, 1.0, 0.97];
-    const yearScale = 0.97 + (selectedYear % 5) * 0.01;
-    const f = (modo === 'mes' ? monthScale[selectedMonth] : 1.0) * yearScale;
-    return {
-      origen: f,
-      gastos: f * 0.98,
-      ingresos: f * 1.02,
-      comisiones: f * 1.0,
-      propietarios: f * 1.01,
-    };
-  }, [modo, selectedMonth, selectedYear]);
-
-  // Datos derivados que reaccionan al filtro
-  const demoOrigen = useMemo(() => {
-    const month = selectedMonth;
-    const yearMult = modo === 'año' ? 12 : 1; // año = acumulado simple en demo
-    return baseOrigen.map((d, idx) => {
-      // variación por mes y categoría para que cambie la composición
-      const wiggle = 1 + 0.18 * Math.sin((month + 1 + idx * 2) * 0.8);
-      const value = Math.round(d.count * factors.origen * wiggle) * yearMult;
-      return { ...d, count: Math.max(0, value) };
-    });
-  }, [baseOrigen, factors, modo, selectedMonth]);
-
-  const demoGastos = useMemo(() => {
-    const month = selectedMonth;
-    const yearMult = modo === 'año' ? 12 : 1; // año = acumulado simple en demo
-    return baseGastos.map((g, idx) => {
-      const wiggle = 1 + 0.15 * Math.cos((month + 1 + idx) * 0.7);
-      const value = Math.round(g.total * factors.gastos * wiggle) * yearMult;
-      return { ...g, total: Math.max(0, value) };
-    });
-  }, [baseGastos, factors, modo, selectedMonth]);
-
-  const demoGananciaProp = useMemo(
-    () => baseGananciaProp.map((g) => ({ ...g, ganancia: Math.max(0, Math.round(g.ganancia * factors.ingresos - 0)) })),
-    [baseGananciaProp, factors]
-  ); 
-
-  const detalleProp = useMemo(() => {
-    return baseDetalleProp.map((r) => {
-      const ingresos = Math.round(r.ingresos * factors.ingresos);
-      const comisiones = Math.round(r.comisiones * factors.comisiones);
-      const gastos = Math.round(r.gastos * factors.gastos);
-      const propietarios = Math.max(0, ingresos - comisiones);
-      const ganancia = Math.max(0, ingresos - propietarios - gastos); // equivalente a comisiones - gastos
-      const margen = ingresos > 0 ? ganancia / ingresos : 0;
-      return { propiedad: r.propiedad, ingresos, comisiones, gastos, propietarios, ganancia, margen };
-    });
-  }, [baseDetalleProp, factors]);
+  useEffect(() => {
+    const { from, to } = computeRange()
+    const qs = (p: Record<string, string | undefined>) =>
+      Object.entries(p).filter(([, v]) => Boolean(v)).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v as string)}`).join('&')
+    const url = (path: string, p: Record<string, string | undefined>) => `${path}?${qs(p)}`
+    setLoading(true)
+    setErrorMsg(null)
+    Promise.allSettled([
+      fetch(url('/api/analisis/origen', { from, to })).then(r => r.ok ? r.json() : Promise.reject(r.status)),
+      fetch(url('/api/analisis/gastos-categoria', { from, to })).then(r => r.ok ? r.json() : Promise.reject(r.status)),
+      fetch(url('/api/analisis/ganancia-propiedad', { from, to })).then(r => r.ok ? r.json() : Promise.reject(r.status)),
+      fetch(url('/api/analisis/detalle-propiedad', { from, to })).then(r => r.ok ? r.json() : Promise.reject(r.status)),
+    ]).then(([o, g, gp, det]) => {
+      setDataOrigen(o.status === 'fulfilled' ? (o.value.data || []) : [])
+      setDataGastosCat(g.status === 'fulfilled' ? (g.value.data || []) : [])
+      setDataGananciaProp(gp.status === 'fulfilled' ? (gp.value.data || []) : [])
+      setDetalleProp(det.status === 'fulfilled' ? (det.value.data || []) : [])
+    }).catch(() => {
+      setErrorMsg('No se pudieron cargar los datos de análisis.')
+    }).finally(() => setLoading(false))
+  }, [modo, selectedMonth, selectedYear])
 
   const kpis = useMemo(() => {
-    const ingresosBase = 12862850;
-    const comisionesBase = 4375649;
-    const propietariosBase = 7983973;
-    const gastosBase = 315536;
-    const ingresos = Math.round(ingresosBase * factors.ingresos);
-    const comisiones = Math.round(comisionesBase * factors.comisiones);
-    const propietarios = Math.round(propietariosBase * factors.propietarios);
-    const gastos = Math.round(gastosBase * factors.gastos);
-    const ganancia = ingresos - propietarios - gastos;
-    const margen = ingresos ? ganancia / ingresos : 0;
-    return { ingresos, comisiones, propietarios, gastos, ganancia, margen };
-  }, [factors]);
+    const ingresos = detalleProp.reduce((a, r) => a + (r.ingresos || 0), 0)
+    const comisiones = detalleProp.reduce((a, r) => a + (r.comisiones || 0), 0)
+    const propietarios = detalleProp.reduce((a, r) => a + (r.propietarios || 0), 0)
+    const gastos = detalleProp.reduce((a, r) => a + (r.gastos || 0), 0)
+    const ganancia = detalleProp.reduce((a, r) => a + (r.ganancia || 0), 0)
+    const margen = ingresos ? ganancia / ingresos : 0
+    return { ingresos, comisiones, propietarios, gastos, ganancia, margen }
+  }, [detalleProp]);
 
   const formatARS = (n: number) =>
     n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -158,13 +98,13 @@ export default function AnalisisPage() {
       ['Margen', kpis.margen],
       [],
       ['Plataforma', 'Reservas (%) aprox'],
-      ...demoOrigen.map((d) => [d.origen, d.count]),
+      ...dataOrigen.map((d) => [d.origen, d.count]),
       [],
       ['Categoría Gasto', 'Total'],
-      ...demoGastos.map((g) => [g.categoria, g.total]),
+      ...dataGastosCat.map((g) => [g.categoria, g.total]),
       [],
       ['Propiedad', 'Ganancia'],
-      ...demoGananciaProp.map((g) => [g.propiedad, g.ganancia]),
+      ...dataGananciaProp.map((g) => [g.propiedad, g.ganancia]),
     ];
     const csv = rows.map((r) => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -343,11 +283,11 @@ export default function AnalisisPage() {
 
         {/* Gráficos */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-          <PieOrigen data={demoOrigen} />
-          <PieGastos data={demoGastos} />
+          <PieOrigen data={dataOrigen} />
+          <PieGastos data={dataGastosCat} />
         </section>
         <section className="mt-4">
-          <BarGananciaPropiedad data={demoGananciaProp} />
+          <BarGananciaPropiedad data={dataGananciaProp} />
         </section>
 
         {/* Tabla: detalle por propiedad */}

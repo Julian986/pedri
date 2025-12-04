@@ -11,24 +11,36 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
-    const duenoId = searchParams.get('duenoId');
+    const reservaId = searchParams.get('reservaId');
+    const propiedadId = searchParams.get('propiedadId');
+    const from = searchParams.get('from'); // ISO date
+    const to = searchParams.get('to'); // ISO date
     const estado = searchParams.get('estado');
 
     let query: any = {};
 
-    if (duenoId) {
-      query.duenoId = duenoId;
+    if (reservaId) {
+      query.reservaId = reservaId;
+    }
+
+    if (propiedadId) {
+      query.propiedadId = propiedadId;
     }
 
     if (estado) {
       query.estado = estado;
     }
 
+    if (from || to) {
+      query.fechaPago = {};
+      if (from) query.fechaPago.$gte = new Date(from);
+      if (to) query.fechaPago.$lte = new Date(to);
+    }
+
     const pagos = await Pago.find(query)
       .populate('reservaId', 'nombreHuesped fechaInicio fechaFin')
       .populate('propiedadId', 'nombre direccion')
-      .populate('duenoId', 'nombre email')
-      .sort({ createdAt: -1 });
+      .sort({ fechaPago: -1, createdAt: -1 });
 
     return NextResponse.json({ pagos });
   } catch (error) {
@@ -52,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
 
-    // Obtener información de la reserva y propiedad
+    // Validar existencia de la reserva y propiedad
     const reserva = await Reserva.findById(data.reservaId);
     const propiedad = await Propiedad.findById(data.propiedadId);
 
@@ -70,7 +82,6 @@ export async function POST(request: NextRequest) {
 
     const pago = await Pago.create({
       ...data,
-      duenoId: propiedad.duenoId,
       comisionPorcentaje,
       comisionMonto,
       montoDueno,

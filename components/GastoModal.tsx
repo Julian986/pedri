@@ -12,14 +12,19 @@ interface GastoModalProps {
     tipoGasto: string
     propiedad: string
     monto: number
+    nota?: string
+    moneda: 'ARS' | 'USD'
   }) => void
+  propertyNames?: string[]
 }
 
-export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProps) {
+export default function GastoModal({ isOpen, onClose, onSubmit, propertyNames = [] }: GastoModalProps) {
   const [mes, setMes] = useState('')
   const [tipoGasto, setTipoGasto] = useState('')
   const [propiedad, setPropiedad] = useState('')
   const [monto, setMonto] = useState('')
+  const [nota, setNota] = useState('')
+  const [moneda, setMoneda] = useState<'ARS' | 'USD'>('ARS')
 
   const [errors, setErrors] = useState<Partial<Record<'mes' | 'tipoGasto' | 'propiedad' | 'monto', string>>>({})
   const [touched, setTouched] = useState<Partial<Record<'mes' | 'tipoGasto' | 'propiedad' | 'monto', boolean>>>({})
@@ -34,6 +39,7 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
   const mesRef = useRef<HTMLDivElement | null>(null)
   const tipoRef = useRef<HTMLDivElement | null>(null)
   const propiedadRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   const now = new Date()
   const [mesPickerYear, setMesPickerYear] = useState<number>(now.getFullYear())
@@ -52,14 +58,16 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
     'Cosas'
   ]
 
-  const PROPIEDAD_OPCIONES = [
-    'Ayres de Güemes',
-    'Excelente ubicación Güemes, Luminoso',
-    'Frente al Mar! Hermosas vistas! Cochera',
-    'Frente al Mar! Increíbles vistas! Con piscina',
-    'Hermosas vistas, cálido y luminoso',
-    'Lo de Vicente'
-  ]
+  const PROPIEDAD_OPCIONES = propertyNames.length > 0
+    ? propertyNames
+    : [
+        'Ayres de Güemes',
+        'Excelente ubicación Güemes, Luminoso',
+        'Frente al Mar! Hermosas vistas! Cochera',
+        'Frente al Mar! Increíbles vistas! Con piscina',
+        'Hermosas vistas, cálido y luminoso',
+        'Lo de Vicente'
+      ]
 
   const NOMBRES_MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
   const pad2 = (n: number) => String(n).padStart(2, '0')
@@ -100,7 +108,14 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
 
     try {
       schema.parse({ mes, tipoGasto, propiedad, monto })
-      onSubmit({ mes, tipoGasto, propiedad, monto: parseFloat(monto) })
+      onSubmit({
+        mes,
+        tipoGasto,
+        propiedad,
+        monto: parseFloat(monto),
+        nota: nota.trim() || undefined,
+        moneda,
+      })
       handleReset()
       onClose()
     } catch (error) {
@@ -121,6 +136,8 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
     setTipoGasto('')
     setPropiedad('')
     setMonto('')
+    setNota('')
+    setMoneda('ARS')
     setErrors({})
     setTouched({})
   }
@@ -128,8 +145,8 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end md:items-center justify-center pb-16 md:pb-0">
-      <div className="bg-gray-900 w-full md:max-w-md md:rounded-lg rounded-t-2xl max-h-[85vh] md:max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-end md:items-center justify-center pb-16 md:pb-0" style={{ paddingBottom: 'var(--kb-inset, 0px)' }}>
+      <div ref={containerRef} className="bg-gray-900 w-full md:max-w-md md:rounded-lg rounded-t-2xl max-h-[85vh] md:max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
         {/* Header */}
         <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">Nuevo Gasto</h2>
@@ -154,11 +171,8 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
-          {/* Mes (selector personalizado) */}
+          {/* Mes (selector personalizado, sin label) */}
           <div ref={mesRef} className="relative">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Mes
-            </label>
             <button
               type="button"
               onClick={() => {
@@ -182,7 +196,7 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
               className="relative w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-12 py-3 text-left text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
               <span className="text-sm text-gray-300">
-                {mes ? (() => { const [y,mn] = mes.split('-'); return `${NOMBRES_MESES_CORTOS[parseInt(mn,10)-1]} ${y}` })() : 'Seleccionar mes'}
+                {mes ? (() => { const [y,mn] = mes.split('-'); return `${NOMBRES_MESES_CORTOS[parseInt(mn,10)-1]} ${y}` })() : 'Mes'}
               </span>
               <IoChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
             </button>
@@ -219,11 +233,8 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
             )}
           </div>
 
-          {/* Tipo de gasto (dropdown custom) */}
+          {/* Tipo de gasto (dropdown custom, sin label) */}
           <div ref={tipoRef} className="relative">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Tipo de Gasto
-            </label>
             <button
               type="button"
               onClick={() => {
@@ -236,7 +247,7 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
               }}
               className="relative w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-12 py-3 text-left text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              <span className={`text-sm ${tipoGasto ? 'text-gray-200' : 'text-gray-400'}`}>{tipoGasto || 'Seleccionar tipo'}</span>
+              <span className={`text-sm ${tipoGasto ? 'text-gray-200' : 'text-gray-400'}`}>{tipoGasto || 'Tipo de gasto'}</span>
               <IoChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
             </button>
             {openTipo && (
@@ -259,11 +270,8 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
             )}
           </div>
 
-          {/* Propiedad (dropdown custom) */}
+          {/* Propiedad (dropdown custom, sin label) */}
           <div ref={propiedadRef} className="relative">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Propiedad
-            </label>
             <button
               type="button"
               onClick={() => {
@@ -276,7 +284,7 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
               }}
               className="relative w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-12 py-3 text-left text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              <span className={`text-sm ${propiedad ? 'text-gray-200' : 'text-gray-400'}`}>{propiedad || 'Seleccionar propiedad'}</span>
+              <span className={`text-sm ${propiedad ? 'text-gray-200' : 'text-gray-400'}`}>{propiedad || 'Propiedad'}</span>
               <IoChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
             </button>
             {openPropiedad && (
@@ -299,11 +307,8 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
             )}
           </div>
 
-          {/* Monto */}
+          {/* Monto (sin label) */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Monto (ARS)
-            </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
               <input
@@ -311,7 +316,7 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
                 value={monto}
                 onChange={(e) => { setMonto(e.target.value); if (errors.monto) setErrors({ ...errors, monto: undefined }) }}
                 onBlur={() => setTouched({ ...touched, monto: true })}
-                placeholder="0.00"
+                placeholder="Monto"
                 min="0"
                 step="0.01"
                 className={`w-full bg-gray-800 border rounded-lg pl-8 pr-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${touched.monto && errors.monto ? 'border-red-500' : 'border-gray-700'}`}
@@ -320,6 +325,42 @@ export default function GastoModal({ isOpen, onClose, onSubmit }: GastoModalProp
             {touched.monto && errors.monto && (
               <p className="text-red-500 text-xs mt-1 px-1">{errors.monto}</p>
             )}
+          </div>
+
+          {/* Moneda (sin label) */}
+          <div>
+            <select
+              value={moneda}
+              onChange={(e) => setMoneda(e.target.value as 'ARS' | 'USD')}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+
+          {/* Nota (opcional, sin label) */}
+          <div>
+            <textarea
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              onFocus={(e) => {
+                const el = e.currentTarget as HTMLElement
+                const c = containerRef.current
+                if (!c) return
+                const r = el.getBoundingClientRect()
+                const cr = c.getBoundingClientRect()
+                const offset = 60
+                if (r.bottom > cr.bottom) {
+                  c.scrollTop += (r.bottom - cr.bottom) + offset
+                } else if (r.top < cr.top) {
+                  c.scrollTop -= (cr.top - r.top) + offset
+                }
+              }}
+              placeholder="Nota (opcional)"
+              rows={3}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"
+            />
           </div>
 
           {/* Botón principal */}

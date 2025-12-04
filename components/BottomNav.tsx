@@ -56,7 +56,10 @@ export default function BottomNav({ disabled = false }: BottomNavProps) {
   const pathname = usePathname()
 
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-[70] md:hidden transition-opacity ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+    <nav
+      className={`fixed left-0 right-0 bg-black border-t border-gray-800 z-[70] md:hidden transition-opacity ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      style={{ bottom: 'var(--kb-inset, 0px)' }}
+    >
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.path

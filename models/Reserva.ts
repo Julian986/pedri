@@ -3,13 +3,13 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IReserva extends Document {
   propiedadId: mongoose.Types.ObjectId;
   nombreHuesped: string;
-  emailHuesped: string;
-  telefonoHuesped: string;
+  emailHuesped?: string;
+  telefonoHuesped?: string;
   fechaInicio: Date;
   fechaFin: Date;
   numeroHuespedes: number;
   precioTotal: number;
-  origen: 'Airbnb' | 'Booking' | 'Particular' | 'Otro';
+  origen: 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Particular' | 'Otro';
   estado: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada';
   notas?: string;
   createdAt: Date;
@@ -30,13 +30,13 @@ const ReservaSchema = new Schema<IReserva>(
     },
     emailHuesped: {
       type: String,
-      required: [true, 'El email del huésped es requerido'],
+      required: false,
       lowercase: true,
       trim: true,
     },
     telefonoHuesped: {
       type: String,
-      required: [true, 'El teléfono del huésped es requerido'],
+      required: false,
       trim: true,
     },
     fechaInicio: {
@@ -59,12 +59,12 @@ const ReservaSchema = new Schema<IReserva>(
     },
     origen: {
       type: String,
-      enum: ['Airbnb', 'Booking', 'Particular', 'Otro'],
+      enum: ['Airbnb', 'Booking', 'Facebook', 'Mercado Libre', 'Recomendado', 'Particular', 'Otro'],
       required: [true, 'El origen es requerido'],
     },
     estado: {
       type: String,
-      enum: ['pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada'],
+      enum: ['pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada', 'bloqueo'],
       default: 'pendiente',
     },
     notas: {
@@ -78,9 +78,24 @@ const ReservaSchema = new Schema<IReserva>(
 
 // Índice para búsquedas rápidas de disponibilidad
 ReservaSchema.index({ propiedadId: 1, fechaInicio: 1, fechaFin: 1 });
+// Índices adicionales para filtro por rangos en Calendario/Listados
+ReservaSchema.index({ propiedadId: 1, fechaInicio: 1 });
+ReservaSchema.index({ propiedadId: 1, fechaFin: 1 });
 
-const Reserva: Model<IReserva> = 
-  mongoose.models.Reserva || mongoose.model<IReserva>('Reserva', ReservaSchema);
+/**
+ * Consulta estándar de Calendario (mes visible):
+ * propiedadId = X
+ * AND fechaInicio < finMes
+ * AND fechaFin > inicioMes
+ * AND estado != 'cancelada'
+ * Nota: usar rango [fechaInicio, fechaFin) (fin exclusivo) para evitar solapamientos en checkout/checkin.
+ */
+
+// En desarrollo, forzar refresco del modelo si ya estaba registrado con un schema viejo
+if (mongoose.models.Reserva) {
+  delete mongoose.models.Reserva;
+}
+const Reserva: Model<IReserva> = mongoose.model<IReserva>('Reserva', ReservaSchema);
 
 export default Reserva;
 

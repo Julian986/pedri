@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Reserva from '@/models/Reserva';
-import { requireAuth } from '@/lib/middleware';
+// Importar para registrar el modelo y evitar MissingSchemaError en populate
+import '@/models/Propiedad';
+
 
 // GET - Obtener todas las reservas
 export async function GET(request: NextRequest) {
@@ -13,6 +15,8 @@ export async function GET(request: NextRequest) {
     const estado = searchParams.get('estado');
     const fechaInicio = searchParams.get('fechaInicio');
     const fechaFin = searchParams.get('fechaFin');
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
 
     let query: any = {};
 
@@ -24,13 +28,23 @@ export async function GET(request: NextRequest) {
       query.estado = estado;
     }
 
-    if (fechaInicio && fechaFin) {
-      query.$or = [
-        {
-          fechaInicio: { $lte: new Date(fechaFin) },
-          fechaFin: { $gte: new Date(fechaInicio) },
-        },
-      ];
+    const rangeStart = from || fechaInicio;
+    const rangeEnd = to || fechaFin;
+    if (rangeStart || rangeEnd) {
+      const start = rangeStart ? new Date(rangeStart) : undefined;
+      const end = rangeEnd ? new Date(rangeEnd) : undefined;
+      if (start && end) {
+        query.$or = [
+          {
+            fechaInicio: { $lte: end },
+            fechaFin: { $gte: start },
+          },
+        ];
+      } else if (start) {
+        query.fechaFin = { $gte: start };
+      } else if (end) {
+        query.fechaInicio = { $lte: end };
+      }
     }
 
     const reservas = await Reserva.find(query)
@@ -50,11 +64,6 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva reserva
 export async function POST(request: NextRequest) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-
     await dbConnect();
 
     const data = await request.json();

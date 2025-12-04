@@ -40,65 +40,65 @@ export default function Home() {
   useEffect(() => {
     setGlobalModalOpen(isModalOpen)
   }, [isModalOpen, setGlobalModalOpen])
-  const [reservations, setReservations] = useState<Reservation[]>([
-    {
-      id: '1',
-      propiedad: 'Departamento Palermo Soho',
-      huesped: 'carolina fernández',
-      checkIn: '10 oct',
-      checkOut: '15 oct',
-      checkInDay: 10,
-      checkInMonth: 9, // octubre (0-indexed)
-      checkInYear: 2025,
-      checkOutDay: 15,
-      checkOutMonth: 9,
-      checkOutYear: 2025,
-      noches: 5,
-      clientes: 2,
-      estado: 'Confirmada',
-      telefono: '+54 9 11 3456-7890',
-      total: '185000',
-      sena: '60000',
-    },
-    {
-      id: '2',
-      propiedad: 'Loft Recoleta con Terraza',
-      huesped: 'martín lópez',
-      checkIn: '15 oct',
-      checkOut: '20 oct',
-      checkInDay: 15,
-      checkInMonth: 9,
-      checkInYear: 2025,
-      checkOutDay: 20,
-      checkOutMonth: 9,
-      checkOutYear: 2025,
-      noches: 5,
-      clientes: 2,
-      estado: 'Confirmada',
-      telefono: '+54 9 11 5678-1234',
-      total: '175000',
-      sena: '55000',
-    },
-    {
-      id: '3',
-      propiedad: 'Departamento Belgrano',
-      huesped: 'laura sánchez',
-      checkIn: '8 nov',
-      checkOut: '12 nov',
-      checkInDay: 8,
-      checkInMonth: 10, // noviembre (0-indexed)
-      checkInYear: 2025,
-      checkOutDay: 12,
-      checkOutMonth: 10,
-      checkOutYear: 2025,
-      noches: 4,
-      clientes: 3,
-      estado: 'Confirmada',
-      telefono: '+54 9 11 4567-8901',
-      total: '150000',
-      sena: '50000',
-    },
-  ])
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [reservationsLoading, setReservationsLoading] = useState<boolean>(true)
+  const [reservationsError, setReservationsError] = useState<string | null>(null)
+
+  // Cargar reservas reales para el mes visible
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setReservationsLoading(true)
+        setReservationsError(null)
+        const first = new Date(currentYear, currentMonth, 1, 0, 0, 0, 0).toISOString()
+        const last = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999).toISOString()
+        const res = await fetch(`/api/reservas?from=${encodeURIComponent(first)}&to=${encodeURIComponent(last)}`)
+        if (!res.ok) throw new Error(String(res.status))
+        const json = await res.json()
+        const list: any[] = Array.isArray(json?.reservas) ? json.reservas : []
+        const mapped: Reservation[] = list.map((r) => {
+          const inicio = r.fechaInicio ? new Date(r.fechaInicio) : null
+          const fin = r.fechaFin ? new Date(r.fechaFin) : null
+          const checkInDay = inicio ? inicio.getDate() : 1
+          const checkInMonth = inicio ? inicio.getMonth() : currentMonth
+          const checkInYear = inicio ? inicio.getFullYear() : currentYear
+          const checkOutDay = fin ? fin.getDate() : checkInDay
+          const checkOutMonth = fin ? fin.getMonth() : checkInMonth
+          const checkOutYear = fin ? fin.getFullYear() : checkInYear
+          const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
+          const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
+          const estadoBack = (r.estado || '').toLowerCase()
+          const estado: Reservation['estado'] = estadoBack === 'cancelada' ? 'Cancelada' : 'Confirmada'
+          return {
+            id: String(r._id),
+            propiedad: r.propiedadId?.nombre || '',
+            huesped: r.nombreHuesped || '',
+            checkIn: short(inicio),
+            checkOut: short(fin),
+            checkInDay,
+            checkInMonth,
+            checkInYear,
+            checkOutDay,
+            checkOutMonth,
+            checkOutYear,
+            noches,
+            clientes: 2,
+            estado,
+            telefono: r.telefonoHuesped || '',
+            total: String(r.precioTotal || ''),
+            sena: '',
+          }
+        })
+        setReservations(mapped)
+      } catch {
+        setReservations([])
+        setReservationsError('No se pudieron cargar las reservas.')
+      } finally {
+        setReservationsLoading(false)
+      }
+    }
+    load()
+  }, [currentMonth, currentYear])
 
   // Calcular indicadores de reservas por día para el mes actual del calendario
   const reservationIndicators: { [key: number]: { checkIn: boolean; checkOut: boolean } } = {}
@@ -248,33 +248,100 @@ export default function Home() {
     ))
   }
 
-  const handleNewReservation = (data: ReservationFormData) => {
-    // Agregar hora para evitar problemas de zona horaria
-    const desde = new Date(data.desde + 'T00:00:00')
-    const hasta = new Date(data.hasta + 'T00:00:00')
-    const noches = Math.ceil((hasta.getTime() - desde.getTime()) / (1000 * 60 * 60 * 24))
+  const handleNewReservation = async (data: ReservationFormData) => {
+    try {
+      // Resolver propiedadId por nombre
+      const propsRes = await fetch('/api/propiedades')
+      if (!propsRes.ok) throw new Error('props')
+      const propsJson = await propsRes.json()
+      const propsList: any[] = Array.isArray(propsJson?.propiedades) ? propsJson.propiedades : []
+      const norm = (s: string) =>
+        (s || '')
+          .normalize('NFD')
+          .replace(/[\\u0300-\\u036f]/g, '')
+          .toLowerCase()
+          .trim()
+      const target = norm(data.alojamiento || '')
+      const prop =
+        propsList.find((p) => norm(p?.nombre || '') === target) ||
+        propsList.find((p) => norm(p?.nombre || '').includes(target)) ||
+        null
+      if (!prop?._id) {
+        if (typeof window !== 'undefined') {
+          window.alert('No se encontró la propiedad. Escribí el nombre tal como figura en Calendario.')
+        }
+        return
+      }
 
-    const newReservation: Reservation = {
-      id: Date.now().toString(),
-      propiedad: data.alojamiento,
-      huesped: data.huesped,
-      checkIn: `${desde.getDate()} ${desde.toLocaleDateString('es', { month: 'short' })}`,
-      checkOut: `${hasta.getDate()} ${hasta.toLocaleDateString('es', { month: 'short' })}`,
-      checkInDay: desde.getDate(),
-      checkInMonth: desde.getMonth(),
-      checkInYear: desde.getFullYear(),
-      checkOutDay: hasta.getDate(),
-      checkOutMonth: hasta.getMonth(),
-      checkOutYear: hasta.getFullYear(),
-      noches,
-      clientes: 2, // Podríamos agregarlo al formulario
-      estado: 'Confirmada',
-      telefono: data.telefono,
-      total: data.total,
-      sena: data.sena,
+      // Construir payload para backend
+      const payload = {
+        propiedadId: prop._id,
+        nombreHuesped: data.huesped,
+        telefonoHuesped: data.telefono,
+        fechaInicio: data.desde,
+        fechaFin: data.hasta,
+        numeroHuespedes: 2,
+        precioTotal: Number(data.total || 0),
+        origen: data.plataforma || 'Particular',
+        estado: 'confirmada',
+      }
+
+      const res = await fetch('/api/reservas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '')
+        throw new Error(`post ${res.status} ${errText}`)
+      }
+
+      // Refrescar listado del mes visible
+      const first = new Date(currentYear, currentMonth, 1, 0, 0, 0, 0).toISOString()
+      const last = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999).toISOString()
+      const listRes = await fetch(`/api/reservas?from=${encodeURIComponent(first)}&to=${encodeURIComponent(last)}`)
+      if (listRes.ok) {
+        const json = await listRes.json()
+        const list: any[] = Array.isArray(json?.reservas) ? json.reservas : []
+        const mapped: Reservation[] = list.map((r) => {
+          const inicio = r.fechaInicio ? new Date(r.fechaInicio) : null
+          const fin = r.fechaFin ? new Date(r.fechaFin) : null
+          const checkInDay = inicio ? inicio.getDate() : 1
+          const checkInMonth = inicio ? inicio.getMonth() : currentMonth
+          const checkInYear = inicio ? inicio.getFullYear() : currentYear
+          const checkOutDay = fin ? fin.getDate() : checkInDay
+          const checkOutMonth = fin ? fin.getMonth() : checkInMonth
+          const checkOutYear = fin ? fin.getFullYear() : checkInYear
+          const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
+          const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
+          const estadoBack = (r.estado || '').toLowerCase()
+          const estado: Reservation['estado'] = estadoBack === 'cancelada' ? 'Cancelada' : 'Confirmada'
+          return {
+            id: String(r._id),
+            propiedad: r.propiedadId?.nombre || '',
+            huesped: r.nombreHuesped || '',
+            checkIn: short(inicio),
+            checkOut: short(fin),
+            checkInDay,
+            checkInMonth,
+            checkInYear,
+            checkOutDay,
+            checkOutMonth,
+            checkOutYear,
+            noches,
+            clientes: 2,
+            estado,
+            telefono: r.telefonoHuesped || '',
+            total: String(r.precioTotal || ''),
+            sena: '',
+          }
+        })
+        setReservations(mapped)
+      }
+    } catch (e) {
+      // En caso de error, no hacer nada más; se podría mostrar un toast en el futuro
+      console.error('Error creando reserva:', e)
     }
-
-    setReservations([...reservations, newReservation])
   }
 
   return (
@@ -290,7 +357,9 @@ export default function Home() {
 
       {/* Área de eventos - 55% restante */}
       <div className="flex-1 bg-black overflow-y-auto px-4 py-4">
-        {selectedDay === null ? (
+        {reservationsLoading ? (
+          <div className="text-gray-400 text-sm">Cargando...</div>
+        ) : selectedDay === null ? (
           <div className="text-center py-8">
             <p className="text-gray-400 text-sm mb-3">
               Selecciona un día para ver las reservas
@@ -327,12 +396,13 @@ export default function Home() {
             </button>
           </div>
         )}
+        {reservationsError && <div className="text-xs text-red-400 mt-2">{reservationsError}</div>}
       </div>
 
       {/* Botón flotante de agregar */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-40"
+        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-[80]"
       >
         <IoAdd className="text-3xl" />
       </button>

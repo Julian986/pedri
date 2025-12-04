@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-interface Reserva {
+interface ReservaItem {
   id: string
   desde: string
   hasta: string
@@ -12,50 +12,13 @@ interface Reserva {
   valorTotal: number
   comision: number
   propietario: number
-  plataforma: 'Airbnb' | 'Booking' | 'Particular'
+  plataforma: 'Airbnb' | 'Booking' | 'Particular' | string
 }
 
-const reservasEjemplo: Reserva[] = [
-  {
-    id: '1',
-    desde: '2025-10-15',
-    hasta: '2025-10-20',
-    propiedad: 'Ayres de Güemes',
-    huesped: 'Carolina Fernández',
-    telefono: '+54 9 11 3456-7890',
-    valorTotal: 185000,
-    comision: 27750,
-    propietario: 157250,
-    plataforma: 'Airbnb'
-  },
-  {
-    id: '2',
-    desde: '2025-10-22',
-    hasta: '2025-10-28',
-    propiedad: 'Frente al Mar con piscina',
-    huesped: 'Martín López',
-    telefono: '+54 9 11 5678-1234',
-    valorTotal: 240000,
-    comision: 36000,
-    propietario: 204000,
-    plataforma: 'Booking'
-  },
-  {
-    id: '3',
-    desde: '2025-11-01',
-    hasta: '2025-11-05',
-    propiedad: 'Lo de Vicente',
-    huesped: 'Laura Sánchez',
-    telefono: '+54 9 11 4567-8901',
-    valorTotal: 120000,
-    comision: 0,
-    propietario: 120000,
-    plataforma: 'Particular'
-  }
-]
-
 export default function ReservasPage() {
-  const [reservas] = useState<Reserva[]>(reservasEjemplo)
+  const [reservas, setReservas] = useState<ReservaItem[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [openFiltro, setOpenFiltro] = useState(false)
   const [propiedadFiltro, setPropiedadFiltro] = useState<string>('Todas')
   const propiedades = Array.from(new Set(reservas.map(r => r.propiedad)))
@@ -71,6 +34,51 @@ export default function ReservasPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openFiltro])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true)
+        setErrorMsg(null)
+        const res = await fetch('/api/reservas')
+        if (!res.ok) throw new Error(String(res.status))
+        const json = await res.json()
+        const list = Array.isArray(json?.reservas) ? json.reservas : []
+        const mapped: ReservaItem[] = list.map((r: any) => {
+          const origen = r.origen || 'Particular'
+          const valorTotal = Number(r.precioTotal || 0)
+          const comision = Math.round(valorTotal * 0.10) // aproximación 10%
+          const propietario = Math.max(0, valorTotal - comision)
+          const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
+          const toISO = (d: string | Date | undefined) => {
+            if (!d) return ''
+            const dt = new Date(d)
+            if (isNaN(dt.getTime())) return ''
+            return dt.toISOString().slice(0, 10)
+          }
+          return {
+            id: String(r._id),
+            desde: toISO(r.fechaInicio),
+            hasta: toISO(r.fechaFin),
+            propiedad: propNombre,
+            huesped: r.nombreHuesped || '',
+            telefono: r.telefonoHuesped || '',
+            valorTotal,
+            comision,
+            propietario,
+            plataforma: origen,
+          }
+        })
+        setReservas(mapped)
+      } catch (e) {
+        setErrorMsg('No se pudieron cargar las reservas.')
+        setReservas([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   const formatearFecha = (fecha: string) => {
     const date = new Date(fecha)
@@ -101,6 +109,9 @@ export default function ReservasPage() {
   return (
     <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
       <div className="px-4 py-6">
+        {errorMsg && (
+          <div className="mb-3 text-xs text-red-400">{errorMsg}</div>
+        )}
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white mb-1">Reservas</h1>
@@ -142,6 +153,9 @@ export default function ReservasPage() {
         </div>
 
         {/* Lista de reservas */}
+        {loading ? (
+          <div className="text-gray-400 text-sm">Cargando...</div>
+        ) : (
         <div className="space-y-4">
           {reservas
             .filter((r) => propiedadFiltro === 'Todas' ? true : r.propiedad === propiedadFiltro)
@@ -205,6 +219,7 @@ export default function ReservasPage() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </main>
   )

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Propiedad from '@/models/Propiedad';
-import { requireAuth } from '@/lib/middleware';
+
 
 // GET - Obtener todas las propiedades
 export async function GET(request: NextRequest) {
@@ -9,22 +9,15 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
-    const duenoId = searchParams.get('duenoId');
     const activo = searchParams.get('activo');
 
     let query: any = {};
-
-    if (duenoId) {
-      query.duenoId = duenoId;
-    }
 
     if (activo !== null) {
       query.activo = activo === 'true';
     }
 
-    const propiedades = await Propiedad.find(query)
-      .populate('duenoId', 'nombre email telefono')
-      .sort({ createdAt: -1 });
+    const propiedades = await Propiedad.find(query).sort({ createdAt: -1 });
 
     return NextResponse.json({ propiedades });
   } catch (error) {
@@ -39,11 +32,6 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva propiedad
 export async function POST(request: NextRequest) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-
     await dbConnect();
 
     const data = await request.json();

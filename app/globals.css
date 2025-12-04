@@ -40,6 +40,13 @@ input[type="number"] {
   color-scheme: dark;
 }
 
+/* Ajuste general de viewport/teclado en móviles */
+html { height: 100%; }
+@supports (height: 100dvh) {
+  html, body { height: 100%; }
+}
+:root { --kb-inset: 0px; }
+
 @keyframes slide-up {
   from {
     transform: translateY(100%);

@@ -194,18 +194,46 @@ export default function CalendarioPage() {
       const dataReservas: any = resReservas.ok ? await resReservas.json() : null
 
       const propiedadesObtenidas: Propiedad[] =
-        dataPropiedades?.success && Array.isArray(dataPropiedades.data) && dataPropiedades.data.length > 0
-          ? dataPropiedades.data
-          : PROPIEDADES_DEMO
+        (Array.isArray(dataPropiedades?.propiedades) && dataPropiedades.propiedades.length > 0)
+          ? dataPropiedades.propiedades
+          : (dataPropiedades?.success && Array.isArray(dataPropiedades.data) && dataPropiedades.data.length > 0)
+            ? dataPropiedades.data
+            : PROPIEDADES_DEMO
 
       setPropiedades(propiedadesObtenidas)
 
-      const reservasObtenidas: Reserva[] =
-        dataReservas?.success && Array.isArray(dataReservas.data) && dataReservas.data.length > 0
-          ? dataReservas.data
-          : Array.isArray(dataReservas?.reservas) && dataReservas.reservas.length > 0
-            ? dataReservas.reservas
-            : crearReservasDemo(añoVisor, mesVisor)
+      const reservasObtenidas: Reserva[] = (() => {
+        const raw = Array.isArray(dataReservas?.reservas) ? dataReservas.reservas
+          : (dataReservas?.success && Array.isArray(dataReservas.data) ? dataReservas.data : [])
+        if (raw.length === 0) return crearReservasDemo(añoVisor, mesVisor)
+        // Mapear formato backend -> formato local esperado por el calendario
+        return raw
+          // excluir canceladas/bloqueos
+          .filter((r: any) => {
+            const st = String(r?.estado || '').toLowerCase()
+            return st !== 'cancelada' && st !== 'bloqueo'
+          })
+          .map((r: any) => {
+            const prop = r?.propiedadId
+            const propId = typeof prop === 'string' ? prop : (prop?._id || prop?.id || '')
+            const ymd = (d: any) => {
+              const date = d ? new Date(d) : null
+              if (!date) return ''
+              const y = date.getFullYear()
+              const m = String(date.getMonth() + 1).padStart(2, '0')
+              const dd = String(date.getDate()).padStart(2, '0')
+              return `${y}-${m}-${dd}`
+            }
+            return {
+              _id: String(r?._id || ''),
+              propiedad: String(propId || ''),
+              fechaInicio: ymd(r?.fechaInicio),
+              fechaFin: ymd(r?.fechaFin),
+              precio: Number(r?.precioTotal || 0),
+              nombreHuesped: r?.nombreHuesped || '',
+            } as Reserva
+          })
+      })()
 
       setReservas(reservasObtenidas)
     } catch (error) {
@@ -235,19 +263,64 @@ export default function CalendarioPage() {
     setIsAlojModalOpen(true)
   }
 
-  const guardarAlojamiento = (data: { nombre: string; direccion?: string }) => {
-    if (propEnEdicion) {
-      setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion } : p)))
-    } else {
-      const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion }
-      setPropiedades((prev) => [nuevo, ...prev])
+  const guardarAlojamiento = async (data: { nombre: string; direccion?: string }) => {
+    try {
+      if (propEnEdicion) {
+        // Actualizar en backend
+        const res = await fetch(`/api/propiedades/${propEnEdicion._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion }),
+        })
+        if (!res.ok) throw new Error(`PUT ${res.status}`)
+      } else {
+        // Crear en backend (otros campos quedan por defecto/optativos en el modelo)
+        const res = await fetch('/api/propiedades', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion }),
+        })
+        if (!res.ok) throw new Error(`POST ${res.status}`)
+      }
+      // Refrescar listado de propiedades desde backend
+      const resProps = await fetch('/api/propiedades')
+      if (resProps.ok) {
+        const json = await resProps.json()
+        const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
+        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion })))
+      }
+    } catch (e) {
+      console.error('Error guardando alojamiento:', e)
+      // fallback a estado local si algo falla
+      if (!propEnEdicion) {
+        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion }
+        setPropiedades((prev) => [nuevo, ...prev])
+      } else {
+        setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion } : p)))
+      }
     }
   }
 
-  const eliminarAlojamiento = (id: string) => {
-    setPropiedades((prev) => prev.filter((p) => p._id !== id))
-    // Opcional: limpiar reservas asociadas para evitar trabajo innecesario
-    setReservas((prev) => prev.filter((r) => r.propiedad !== id))
+  const eliminarAlojamiento = async (id: string) => {
+    try {
+      const res = await fetch(`/api/propiedades/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`DELETE ${res.status}`)
+      // Refrescar lista
+      const resProps = await fetch('/api/propiedades')
+      if (resProps.ok) {
+        const json = await resProps.json()
+        const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
+        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion })))
+      } else {
+        setPropiedades((prev) => prev.filter((p) => p._id !== id))
+      }
+      // Limpiar reservas asociadas localmente
+      setReservas((prev) => prev.filter((r) => r.propiedad !== id))
+    } catch (e) {
+      console.error('Error eliminando alojamiento:', e)
+      setPropiedades((prev) => prev.filter((p) => p._id !== id))
+      setReservas((prev) => prev.filter((r) => r.propiedad !== id))
+    }
   }
 
   // Chequeo O(1) usando el índice
@@ -485,7 +558,7 @@ export default function CalendarioPage() {
       {/* Botón flotante para agregar alojamiento */}
       <button
         onClick={abrirNuevoAlojamiento}
-        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-40"
+        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-[80]"
         title="Agregar alojamiento"
       >
         <IoAdd className="text-3xl" />

@@ -2,19 +2,19 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IPropiedad extends Document {
   nombre: string;
-  descripcion: string;
+  descripcion?: string;
   direccion: string;
-  ciudad: string;
-  pais: string;
-  duenoId: mongoose.Types.ObjectId;
+  ciudad?: string;
+  pais?: string;
   tipo: 'apartamento' | 'casa' | 'habitacion' | 'estudio';
-  capacidad: number;
-  habitaciones: number;
-  banos: number;
-  precioPorNoche: number;
+  capacidad?: number;
+  habitaciones?: number;
+  banos?: number;
+  precioPorNoche?: number;
   imagenes: string[];
   servicios: string[];
   activo: boolean;
+  colorUI?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,7 +28,8 @@ const PropiedadSchema = new Schema<IPropiedad>(
     },
     descripcion: {
       type: String,
-      required: [true, 'La descripción es requerida'],
+      required: false,
+      default: '',
     },
     direccion: {
       type: String,
@@ -36,42 +37,43 @@ const PropiedadSchema = new Schema<IPropiedad>(
     },
     ciudad: {
       type: String,
-      required: [true, 'La ciudad es requerida'],
+      required: false,
+      default: '',
     },
     pais: {
       type: String,
-      required: [true, 'El país es requerido'],
+      required: false,
       default: 'Argentina',
-    },
-    duenoId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Usuario',
-      required: [true, 'El dueño es requerido'],
     },
     tipo: {
       type: String,
       enum: ['apartamento', 'casa', 'habitacion', 'estudio'],
-      required: [true, 'El tipo es requerido'],
+      required: false,
+      default: 'apartamento',
     },
     capacidad: {
       type: Number,
-      required: [true, 'La capacidad es requerida'],
+      required: false,
       min: 1,
+      default: 1,
     },
     habitaciones: {
       type: Number,
-      required: [true, 'El número de habitaciones es requerido'],
+      required: false,
       min: 0,
+      default: 0,
     },
     banos: {
       type: Number,
-      required: [true, 'El número de baños es requerido'],
+      required: false,
       min: 1,
+      default: 1,
     },
     precioPorNoche: {
       type: Number,
-      required: [true, 'El precio por noche es requerido'],
+      required: false,
       min: 0,
+      default: 0,
     },
     imagenes: [{
       type: String,
@@ -83,14 +85,20 @@ const PropiedadSchema = new Schema<IPropiedad>(
       type: Boolean,
       default: true,
     },
+    colorUI: {
+      type: String,
+      required: false,
+      trim: true,
+    },
   },
   {
     timestamps: true,
+    collection: 'propiedades',
   }
 );
 
-const Propiedad: Model<IPropiedad> = 
-  mongoose.models.Propiedad || mongoose.model<IPropiedad>('Propiedad', PropiedadSchema);
+const Propiedad: Model<IPropiedad> =
+  mongoose.models.Propiedad || mongoose.model<IPropiedad>('Propiedad', PropiedadSchema, 'propiedades');
 
 export default Propiedad;
 

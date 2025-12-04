@@ -3,6 +3,7 @@ import './globals.css'
 import RegisterServiceWorker from './register-sw'
 import { ModalProvider } from '@/contexts/ModalContext'
 import BottomNavWrapper from '@/components/BottomNavWrapper'
+import ViewportKeyboard from '@/components/ViewportKeyboard'
 
 import { Analytics } from '@vercel/analytics/react'
 
@@ -45,6 +46,8 @@ export const metadata: Metadata = {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    viewportFit: 'cover',
+    interactiveWidget: 'resizes-content',
   },
 }
 
@@ -79,8 +82,9 @@ export default function RootLayout({
       </head>
       <body>
         <ModalProvider>
+          <ViewportKeyboard />
           <RegisterServiceWorker />
-          <div className="pb-16 md:pb-0">
+          <div className="pb-16 md:pb-0" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px))' }}>
             {children}
           </div>
           <BottomNavWrapper />

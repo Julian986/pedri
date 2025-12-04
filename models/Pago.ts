@@ -3,8 +3,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IPago extends Document {
   reservaId: mongoose.Types.ObjectId;
   propiedadId: mongoose.Types.ObjectId;
-  duenoId: mongoose.Types.ObjectId;
   monto: number;
+  moneda: 'ARS' | 'USD';
   comisionPorcentaje: number;
   comisionMonto: number;
   montoDueno: number;
@@ -29,15 +29,15 @@ const PagoSchema = new Schema<IPago>(
       ref: 'Propiedad',
       required: [true, 'La propiedad es requerida'],
     },
-    duenoId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Usuario',
-      required: [true, 'El dueño es requerido'],
-    },
     monto: {
       type: Number,
       required: [true, 'El monto es requerido'],
       min: 0,
+    },
+    moneda: {
+      type: String,
+      enum: ['ARS', 'USD'],
+      required: [true, 'La moneda es requerida'],
     },
     comisionPorcentaje: {
       type: Number,
@@ -80,6 +80,10 @@ const PagoSchema = new Schema<IPago>(
     timestamps: true,
   }
 );
+
+// Índices para listados y agregaciones por reserva/propiedad y fecha
+PagoSchema.index({ reservaId: 1, fechaPago: -1 });
+PagoSchema.index({ propiedadId: 1, fechaPago: -1 });
 
 const Pago: Model<IPago> = 
   mongoose.models.Pago || mongoose.model<IPago>('Pago', PagoSchema);

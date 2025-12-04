@@ -1,8 +1,20 @@
 
 Pedri
 
-Tasks:
+Backend - next js serverless functions como API Routes, MongoDB, Mongoose
 
+- Ultilizaremos Cloudflare WARP para que solo los dispositivos de pe puedan acceder
+Cuando compres el dominio, activamos Cloudflare (proxy naranja), Zero Trust + WARP y bloqueamos el acceso directo al *.vercel.app.
+
+MONGODB_URI="mongodb+srv://USUARIO:PASS@CLUSTER/pedri?retryWrites=true&w=majority&appName=CLUSTER"
+
+Tasks:
+- Mejorar la ux de los formularios
+- hacer mas minimalista la pagina de gastos
+- que lleve al wpp correspondiente
+
+Ideas:
+- ¿Querés que agregue en la UI botones de “Exportar CSV” en Reservas y Gastos, y un filtro por rango de fechas simple (from/to) para que puedas probar los exports directo desde la app?
 
 A considerar:
 - El filtro por mes/año de la pagina de analisis, debe afectar toda la pagina.

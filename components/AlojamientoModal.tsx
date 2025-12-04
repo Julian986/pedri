@@ -118,7 +118,8 @@ export default function AlojamientoModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end md:items-center justify-center pb-16 md:pb-0"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-end md:items-center justify-center pb-16 md:pb-0"
+      style={{ paddingBottom: 'var(--kb-inset, 0px)' }}
       onClick={handleBackdropClick}
     >
       <div className="bg-gray-900 w-full md:max-w-lg md:rounded-t-2xl rounded-t-3xl animate-slide-up flex flex-col max-h-[85vh]">

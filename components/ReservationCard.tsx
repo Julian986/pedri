@@ -36,12 +36,26 @@ export default function ReservationCard({
   const isCheckOut = reservation.checkOutDay === selectedDay
   const isCheckIn = reservation.checkInDay === selectedDay
   const isOngoing = !isCheckOut && !isCheckIn // Estancia en curso
+
+  const formatPhoneForWhatsApp = (raw: string) => {
+    if (!raw) return ''
+    // Quitar todo lo que no sea dígito
+    let n = String(raw).replace(/\D+/g, '')
+    // Quitar ceros iniciales
+    n = n.replace(/^0+/, '')
+    // Si viene con prefijo internacional tipo 0054..., quitar 00
+    n = n.replace(/^00/, '')
+    // Si ya empieza con 54, dejamos; si no, asumimos Argentina y preprendemos 54
+    if (!n.startsWith('54')) {
+      n = `54${n}`
+    }
+    return n
+  }
+
   const handleWhatsAppClick = () => {
-    // Número de WhatsApp fijo para todas las reservas
-    const whatsappNumber = '5492615069397'
-    const message = 'Como dice que le va macho/a ?'
-    const encodedMessage = encodeURIComponent(message)
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
+    const whatsappNumber = formatPhoneForWhatsApp(reservation.telefono || '')
+    if (!whatsappNumber) return
+    const whatsappUrl = `https://wa.me/${whatsappNumber}`
     window.open(whatsappUrl, '_blank')
   }
 
