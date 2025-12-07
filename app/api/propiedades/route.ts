@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       query.activo = activo === 'true';
     }
 
-    const propiedades = await Propiedad.find(query).sort({ createdAt: -1 });
+    const propiedades = await Propiedad.find(query).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({ propiedades });
   } catch (error) {

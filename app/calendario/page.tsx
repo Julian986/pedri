@@ -160,9 +160,14 @@ export default function CalendarioPage() {
         }
       }
 
+      // Rango del mes visible para reducir payload
+      const fromIso = new Date(añoVisor, mesVisor, 1, 0, 0, 0, 0).toISOString()
+      const toIso = new Date(añoVisor, mesVisor + 1, 0, 23, 59, 59, 999).toISOString()
+      const qs = (p: Record<string, string>) => Object.entries(p).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')
+
       const [resPropiedades, resReservas] = await Promise.all([
         fetchWithTimeout('/api/propiedades'),
-        fetchWithTimeout('/api/reservas')
+        fetchWithTimeout(`/api/reservas?${qs({ from: fromIso, to: toIso })}`)
       ])
 
       const dataPropiedades: any = resPropiedades.ok ? await resPropiedades.json() : null

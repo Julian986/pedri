@@ -49,7 +49,8 @@ export async function GET(request: NextRequest) {
 
     const reservas = await Reserva.find(query)
       .populate('propiedadId', 'nombre direccion ciudad')
-      .sort({ fechaInicio: -1 });
+      .sort({ fechaInicio: -1 })
+      .lean();
 
     return NextResponse.json({ reservas });
   } catch (error) {

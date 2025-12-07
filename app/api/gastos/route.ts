@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
 
     const gastos = await Gasto.find(query)
       .populate('propiedadId', 'nombre direccion')
-      .sort({ fecha: -1, createdAt: -1 });
+      .sort({ fecha: -1, createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ gastos });
   } catch (error) {
