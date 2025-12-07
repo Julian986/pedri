@@ -1,52 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import { requireAuth } from '@/lib/middleware';
-import Reserva from '@/models/Reserva';
+import { NextRequest, NextResponse } from 'next/server'
+import dbConnect from '@/lib/mongodb'
+import Reserva from '@/models/Reserva'
+import '@/models/Propiedad'
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
+    await dbConnect()
+
+    const searchParams = request.nextUrl.searchParams
+    const from = searchParams.get('from')
+    const to = searchParams.get('to')
+
+    const match: any = {
+      estado: { $nin: ['cancelada', 'bloqueo'] },
     }
 
-    await dbConnect();
-
-    const { searchParams } = new URL(request.url);
-    const fromParam = searchParams.get('from');
-    const toParam = searchParams.get('to');
-
-    const match: Record<string, any> = {};
-    if (fromParam || toParam) {
-      const createdAt: Record<string, Date> = {};
-      if (fromParam) {
-        const fromDate = new Date(fromParam);
-        if (!isNaN(fromDate.getTime())) createdAt.$gte = fromDate;
+    if (from || to) {
+      const start = from ? new Date(from) : undefined
+      const end = to ? new Date(to) : undefined
+      if (start && end) {
+        // rango de intersección [inicio, fin)
+        match.$and = [
+          { fechaInicio: { $lte: end } },
+          { fechaFin: { $gte: start } },
+        ]
+      } else if (start) {
+        match.fechaFin = { $gte: start }
+      } else if (end) {
+        match.fechaInicio = { $lte: end }
       }
-      if (toParam) {
-        const toDate = new Date(toParam);
-        if (!isNaN(toDate.getTime())) createdAt.$lte = toDate;
-      }
-      if (Object.keys(createdAt).length > 0) match.createdAt = createdAt;
     }
 
-    const pipeline = [
+    const agg = await Reserva.aggregate([
       { $match: match },
-      { $group: { _id: '$origen', count: { $sum: 1 } } },
+      {
+        $group: {
+          _id: '$origen',
+          count: { $sum: 1 },
+        },
+      },
       { $project: { _id: 0, origen: '$_id', count: 1 } },
       { $sort: { count: -1 } },
-    ];
+    ])
 
-    const data = await (Reserva as any).aggregate(pipeline);
-
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: agg })
   } catch (error) {
-    console.error('Error agregando reservas por origen:', error);
-    return NextResponse.json(
-      { error: 'Error agregando reservas por origen' },
-      { status: 500 }
-    );
+    console.error('Error análisis/origen:', error)
+    return NextResponse.json({ error: 'Error análisis/origen' }, { status: 500 })
   }
 }
-
-

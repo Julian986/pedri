@@ -217,22 +217,31 @@ export default function RangeDatePicker({ startDate, endDate, onChange }: RangeD
           <span className="text-gray-500">Seleccionar periodo</span>
         )}
         {(startDate || endDate) && (
-          <button
-            type="button"
+          <span
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation()
               handleClear()
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                handleClear()
+              }
+            }}
             className="ml-2 p-1 hover:bg-gray-700 rounded-full transition-colors"
+            aria-label="Limpiar selección"
           >
             <IoClose className="text-lg" />
-          </button>
+          </span>
         )}
       </button>
 
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-4"
           onClick={() => setIsOpen(false)}
         >
           {/* Calendar Modal */}

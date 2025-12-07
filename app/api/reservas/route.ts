@@ -67,6 +67,20 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const data = await request.json();
+    const start = new Date(data.fechaInicio);
+    const end = new Date(data.fechaFin);
+    if (!(start instanceof Date) || isNaN(start.getTime()) || !(end instanceof Date) || isNaN(end.getTime())) {
+      return NextResponse.json(
+        { error: 'Fechas inválidas' },
+        { status: 400 }
+      );
+    }
+    if (end <= start) {
+      return NextResponse.json(
+        { error: 'La fecha de fin debe ser posterior a la fecha de inicio' },
+        { status: 400 }
+      );
+    }
 
     // Verificar disponibilidad
     const conflicto = await Reserva.findOne({
@@ -74,8 +88,9 @@ export async function POST(request: NextRequest) {
       estado: { $nin: ['cancelada'] },
       $or: [
         {
-          fechaInicio: { $lte: new Date(data.fechaFin) },
-          fechaFin: { $gte: new Date(data.fechaInicio) },
+          // Regla de no-solapamiento con rango [inicio, fin): permitir checkout=checkin siguiente
+          fechaInicio: { $lt: end },
+          fechaFin: { $gt: start },
         },
       ],
     });

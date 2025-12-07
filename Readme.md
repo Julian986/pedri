@@ -8,10 +8,11 @@ Cuando compres el dominio, activamos Cloudflare (proxy naranja), Zero Trust + WA
 
 MONGODB_URI="mongodb+srv://USUARIO:PASS@CLUSTER/pedri?retryWrites=true&w=majority&appName=CLUSTER"
 
-Tasks:
+Tasks:   
 - Mejorar la ux de los formularios
-- hacer mas minimalista la pagina de gastos
-- que lleve al wpp correspondiente
+
+- que lleve al wpp correspondiente✅ 
+- total del form de inicio✅ 
 
 Ideas:
 - ¿Querés que agregue en la UI botones de “Exportar CSV” en Reservas y Gastos, y un filtro por rango de fechas simple (from/to) para que puedas probar los exports directo desde la app?

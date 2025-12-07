@@ -117,7 +117,7 @@ export default function AnalisisPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black px-4 py-6">
+    <main className="min-h-screen bg-black px-4 pt-6 pb-[calc(5rem+var(--kb-inset,0px))]">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -291,7 +291,7 @@ export default function AnalisisPage() {
         </section>
 
         {/* Tabla: detalle por propiedad */}
-        <section className="mt-6">
+        <section className="mt-6 mb-24">
           <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-x-auto">
             <div className="px-4 py-3 text-sm text-white font-medium">Detalle por propiedad </div>
             <table className="min-w-full text-sm">

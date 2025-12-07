@@ -35,6 +35,8 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [toastOk, setToastOk] = useState<string | null>(null)
   
   // Sincronizar estado local con contexto global
   useEffect(() => {
@@ -250,6 +252,12 @@ export default function Home() {
 
   const handleNewReservation = async (data: ReservationFormData) => {
     try {
+      const toMiddayUtcIso = (ymd: string) => {
+        if (!ymd) return ''
+        // Forzar mediodía UTC para evitar desfases por huso horario
+        return new Date(`${ymd}T12:00:00Z`).toISOString()
+      }
+
       // Resolver propiedadId por nombre
       const propsRes = await fetch('/api/propiedades')
       if (!propsRes.ok) throw new Error('props')
@@ -258,7 +266,7 @@ export default function Home() {
       const norm = (s: string) =>
         (s || '')
           .normalize('NFD')
-          .replace(/[\\u0300-\\u036f]/g, '')
+          .replace(/[\u0300-\u036f]/g, '')
           .toLowerCase()
           .trim()
       const target = norm(data.alojamiento || '')
@@ -278,8 +286,8 @@ export default function Home() {
         propiedadId: prop._id,
         nombreHuesped: data.huesped,
         telefonoHuesped: data.telefono,
-        fechaInicio: data.desde,
-        fechaFin: data.hasta,
+        fechaInicio: toMiddayUtcIso(data.desde),
+        fechaFin: toMiddayUtcIso(data.hasta),
         numeroHuespedes: 2,
         precioTotal: Number(data.total || 0),
         origen: data.plataforma || 'Particular',
@@ -292,9 +300,22 @@ export default function Home() {
         body: JSON.stringify(payload),
       })
       if (!res.ok) {
-        const errText = await res.text().catch(() => '')
-        throw new Error(`post ${res.status} ${errText}`)
+        // Mostrar error del servidor en UI para entender el 400
+        let serverMsg = ''
+        try {
+          const errJson = await res.json()
+          serverMsg = errJson?.error || ''
+        } catch {
+          serverMsg = await res.text().catch(() => '')
+        }
+        setToastMsg(serverMsg || `No se pudo crear la reserva (HTTP ${res.status}).`)
+        setTimeout(() => setToastMsg(null), 4000)
+        return
       }
+
+      // Mostrar éxito inmediatamente y refrescar listado del mes visible
+      setToastOk('Reserva agregada correctamente')
+      setTimeout(() => setToastOk(null), 3000)
 
       // Refrescar listado del mes visible
       const first = new Date(currentYear, currentMonth, 1, 0, 0, 0, 0).toISOString()
@@ -400,12 +421,50 @@ export default function Home() {
       </div>
 
       {/* Botón flotante de agregar */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-[80]"
-      >
-        <IoAdd className="text-3xl" />
-      </button>
+      {!isModalOpen && (
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-[80]"
+        >
+          <IoAdd className="text-3xl" />
+        </button>
+      )}
+
+      {/* Toast de éxito estilizado */}
+      {toastOk && (
+        <div className="fixed left-4 right-4 bottom-[calc(7.5rem+var(--kb-inset,0px))] md:bottom-[8.5rem] z-[95]">
+          <div className="bg-emerald-600/15 border border-emerald-500/50 text-emerald-200 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm flex items-start gap-3">
+            <div className="mt-[2px] w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></div>
+            <div className="text-sm leading-5 flex-1">{toastOk}</div>
+            <button
+              type="button"
+              onClick={() => setToastOk(null)}
+              className="text-emerald-200/80 hover:text-emerald-100 transition-colors"
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toast de error estilizado */}
+      {toastMsg && (
+        <div className="fixed left-4 right-4 bottom-[calc(4.5rem+var(--kb-inset,0px))] md:bottom-6 z-[95]">
+          <div className="bg-rose-600/15 border border-rose-500/50 text-rose-200 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm flex items-start gap-3">
+            <div className="mt-[2px] w-2 h-2 rounded-full bg-rose-400 flex-shrink-0"></div>
+            <div className="text-sm leading-5 flex-1">{toastMsg}</div>
+            <button
+              type="button"
+              onClick={() => setToastMsg(null)}
+              className="text-rose-200/80 hover:text-rose-100 transition-colors"
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal de nueva reserva */}
       <ReservationModal
