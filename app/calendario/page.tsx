@@ -46,25 +46,6 @@ const PROPIEDADES_DEMO: Propiedad[] = [
 
 const padNumero = (valor: number) => String(valor).padStart(2, '0')
 
-const crearReservasDemo = (año: number, mes: number): Reserva[] => [
-  {
-    _id: 'demo-1',
-    propiedad: '1',
-    fechaInicio: `${año}-${padNumero(mes + 1)}-05`,
-    fechaFin: `${año}-${padNumero(mes + 1)}-08`,
-    precio: 200
-  },
-  {
-    _id: 'demo-2',
-    propiedad: '2',
-    fechaInicio: `${año}-${padNumero(mes + 1)}-15`,
-    fechaFin: `${año}-${padNumero(mes + 1)}-18`,
-    precio: 180
-  }
-]
-
-const MODO_DEMO_CALENDARIO = process.env.NEXT_PUBLIC_CALENDARIO_MODO_DEMO === 'true'
-
 // Parser seguro para 'YYYY-MM-DD' evitando desfases por timezone
 const parseFechaYMD = (value: string) => {
   const ymd = value.slice(0, 10).split('-')
@@ -163,18 +144,12 @@ export default function CalendarioPage() {
   // Cargar datos
   useEffect(() => {
     cargarDatos()
-  }, [])
+  }, [mesVisor, añoVisor])
 
   const cargarDatos = async () => {
     setCargando(true)
     const inicioMedicion = performance.now()
     try {
-      if (MODO_DEMO_CALENDARIO) {
-        setPropiedades(PROPIEDADES_DEMO)
-        setReservas(crearReservasDemo(añoVisor, mesVisor))
-        return
-      }
-
       const fetchWithTimeout = async (url: string, timeoutMs = 5000) => {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -243,13 +218,8 @@ export default function CalendarioPage() {
       } else {
         console.error('Error al cargar datos:', error)
       }
-      if (MODO_DEMO_CALENDARIO) {
-        setPropiedades(PROPIEDADES_DEMO)
-        setReservas(crearReservasDemo(añoVisor, mesVisor))
-      } else {
-        setPropiedades([])
-        setReservas([])
-      }
+      setPropiedades([])
+      setReservas([])
     } finally {
       setCargando(false)
       const duracion = performance.now() - inicioMedicion
@@ -287,13 +257,8 @@ export default function CalendarioPage() {
         })
         if (!res.ok) throw new Error(`POST ${res.status}`)
       }
-      // Refrescar listado de propiedades desde backend
-      const resProps = await fetch('/api/propiedades')
-      if (resProps.ok) {
-        const json = await resProps.json()
-        const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
-        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion })))
-      }
+      // Refrescar ambos datasets desde backend
+      await cargarDatos()
     } catch (e) {
       console.error('Error guardando alojamiento:', e)
       // fallback a estado local si algo falla
