@@ -175,7 +175,7 @@ export default function CalendarioPage() {
         return
       }
 
-      const fetchWithTimeout = async (url: string, timeoutMs = 800) => {
+      const fetchWithTimeout = async (url: string, timeoutMs = 5000) => {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
         try {
@@ -198,14 +198,14 @@ export default function CalendarioPage() {
           ? dataPropiedades.propiedades
           : (dataPropiedades?.success && Array.isArray(dataPropiedades.data) && dataPropiedades.data.length > 0)
             ? dataPropiedades.data
-            : PROPIEDADES_DEMO
+            : []
 
       setPropiedades(propiedadesObtenidas)
 
       const reservasObtenidas: Reserva[] = (() => {
         const raw = Array.isArray(dataReservas?.reservas) ? dataReservas.reservas
           : (dataReservas?.success && Array.isArray(dataReservas.data) ? dataReservas.data : [])
-        if (raw.length === 0) return crearReservasDemo(añoVisor, mesVisor)
+        if (raw.length === 0) return []
         // Mapear formato backend -> formato local esperado por el calendario
         return raw
           // excluir canceladas/bloqueos
@@ -239,12 +239,17 @@ export default function CalendarioPage() {
     } catch (error) {
       const isAbort = error instanceof DOMException && error.name === 'AbortError'
       if (isAbort) {
-        console.warn('[Calendario] Peticiones abortadas por timeout. Usando datos demo')
+        console.warn('[Calendario] Peticiones abortadas por timeout.')
       } else {
         console.error('Error al cargar datos:', error)
       }
-      setPropiedades(PROPIEDADES_DEMO)
-      setReservas(crearReservasDemo(añoVisor, mesVisor))
+      if (MODO_DEMO_CALENDARIO) {
+        setPropiedades(PROPIEDADES_DEMO)
+        setReservas(crearReservasDemo(añoVisor, mesVisor))
+      } else {
+        setPropiedades([])
+        setReservas([])
+      }
     } finally {
       setCargando(false)
       const duracion = performance.now() - inicioMedicion
