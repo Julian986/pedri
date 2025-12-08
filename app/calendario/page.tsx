@@ -10,6 +10,7 @@ interface Propiedad {
   _id: string
   nombre: string
   direccion?: string
+  comisionPorcentaje?: number
 }
 
 interface Reserva {
@@ -243,14 +244,14 @@ export default function CalendarioPage() {
     setIsAlojModalOpen(true)
   }
 
-  const guardarAlojamiento = async (data: { nombre: string; direccion?: string }) => {
+  const guardarAlojamiento = async (data: { nombre: string; direccion?: string; comisionPorcentaje?: number }) => {
     try {
       if (propEnEdicion) {
         // Actualizar en backend
         const res = await fetch(`/api/propiedades/${propEnEdicion._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion }),
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje }),
         })
         if (!res.ok) throw new Error(`PUT ${res.status}`)
       } else {
@@ -258,7 +259,7 @@ export default function CalendarioPage() {
         const res = await fetch('/api/propiedades', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion }),
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje }),
         })
         if (!res.ok) throw new Error(`POST ${res.status}`)
       }
@@ -268,10 +269,10 @@ export default function CalendarioPage() {
       console.error('Error guardando alojamiento:', e)
       // fallback a estado local si algo falla
       if (!propEnEdicion) {
-        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion }
+        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje }
         setPropiedades((prev) => [nuevo, ...prev])
       } else {
-        setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion } : p)))
+        setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje } : p)))
       }
     }
   }
@@ -285,7 +286,7 @@ export default function CalendarioPage() {
       if (resProps.ok) {
         const json = await resProps.json()
         const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
-        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion })))
+        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion, comisionPorcentaje: p.comisionPorcentaje })))
       } else {
         setPropiedades((prev) => prev.filter((p) => p._id !== id))
       }
@@ -544,7 +545,7 @@ export default function CalendarioPage() {
         isOpen={isAlojModalOpen}
         onClose={() => setIsAlojModalOpen(false)}
         onSubmit={guardarAlojamiento}
-        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion } : undefined}
+        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion, comisionPorcentaje: propEnEdicion.comisionPorcentaje } : undefined}
         mode={propEnEdicion ? 'edit' : 'create'}
         onDelete={propEnEdicion ? () => { eliminarAlojamiento(propEnEdicion._id); setIsAlojModalOpen(false) } : undefined}
       />

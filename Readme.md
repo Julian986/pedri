@@ -9,8 +9,9 @@ Cuando compres el dominio, activamos Cloudflare (proxy naranja), Zero Trust + WA
 MONGODB_URI="mongodb+srv://USUARIO:PASS@CLUSTER/pedri?retryWrites=true&w=majority&appName=CLUSTER"
 
 Tasks:   
-- Mejorar la ux de los formularios
+- En la pagina calendario, cuando presionas en el nombre de un alojamiento se muestran los iconos de eliminar y editar, pero cuando presionas fuera no se cierra, deberia cerrarse ese menu.
 
+- Mejorar la ux de los formularios✅
 - que lleve al wpp correspondiente✅ 
 - total del form de inicio✅ 
 

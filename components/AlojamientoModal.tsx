@@ -7,8 +7,8 @@ import { z } from 'zod'
 interface AlojamientoModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { nombre: string; direccion?: string }) => void
-  initialData?: { nombre: string; direccion?: string }
+  onSubmit: (data: { nombre: string; direccion?: string; comisionPorcentaje?: number }) => void
+  initialData?: { nombre: string; direccion?: string; comisionPorcentaje?: number }
   mode?: 'create' | 'edit'
   onDelete?: () => void
 }
@@ -25,6 +25,14 @@ const alojamientoSchema = z.object({
     .max(120, 'Máximo 120 caracteres')
     .optional()
     .or(z.literal('')),
+  comisionPorcentaje: z.preprocess(
+    (v) => {
+      if (v === '' || v === undefined || v === null) return undefined
+      const n = Number(v)
+      return Number.isNaN(n) ? NaN : n
+    },
+    z.number().min(0, 'Entre 0 y 100').max(100, 'Entre 0 y 100').optional()
+  ),
 })
 
 export default function AlojamientoModal({
@@ -35,18 +43,20 @@ export default function AlojamientoModal({
   mode = 'create',
   onDelete,
 }: AlojamientoModalProps) {
-  const [formData, setFormData] = useState<{ nombre: string; direccion: string }>({
+  const [formData, setFormData] = useState<{ nombre: string; direccion: string; comisionPorcentaje: string }>({
     nombre: initialData?.nombre ?? '',
     direccion: initialData?.direccion ?? '',
+    comisionPorcentaje: initialData?.comisionPorcentaje != null ? String(initialData.comisionPorcentaje) : '',
   })
-  const [errors, setErrors] = useState<Partial<Record<'nombre' | 'direccion', string>>>({})
-  const [touched, setTouched] = useState<Partial<Record<'nombre' | 'direccion', boolean>>>({})
+  const [errors, setErrors] = useState<Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje', string>>>({})
+  const [touched, setTouched] = useState<Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje', boolean>>>({})
 
   // Sincronizar cuando cambie initialData (abrir modal en editar)
   useEffect(() => {
     setFormData({
       nombre: initialData?.nombre ?? '',
       direccion: initialData?.direccion ?? '',
+      comisionPorcentaje: initialData?.comisionPorcentaje != null ? String(initialData.comisionPorcentaje) : '',
     })
     setErrors({})
     setTouched({})
@@ -71,12 +81,12 @@ export default function AlojamientoModal({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name as 'nombre' | 'direccion']) {
+    if (errors[name as 'nombre' | 'direccion' | 'comisionPorcentaje']) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
   }
 
-  const handleBlur = (field: 'nombre' | 'direccion') => {
+  const handleBlur = (field: 'nombre' | 'direccion' | 'comisionPorcentaje') => {
     setTouched((prev) => ({ ...prev, [field]: true }))
     try {
       alojamientoSchema.shape[field].parse(formData[field])
@@ -88,7 +98,7 @@ export default function AlojamientoModal({
   }
 
   const handleReset = () => {
-    setFormData({ nombre: '', direccion: '' })
+    setFormData({ nombre: '', direccion: '', comisionPorcentaje: '' })
     setErrors({})
     setTouched({})
   }
@@ -97,15 +107,19 @@ export default function AlojamientoModal({
     e.preventDefault()
     try {
       const parsed = alojamientoSchema.parse(formData)
-      onSubmit({ nombre: parsed.nombre, direccion: parsed.direccion || undefined })
+      onSubmit({
+        nombre: parsed.nombre,
+        direccion: parsed.direccion || undefined,
+        comisionPorcentaje: parsed.comisionPorcentaje,
+      })
       handleReset()
       onClose()
     } catch (err) {
       if (err instanceof z.ZodError) {
-        const newErrors: Partial<Record<'nombre' | 'direccion', string>> = {}
-        const allTouched: Partial<Record<'nombre' | 'direccion', boolean>> = { nombre: true, direccion: true }
+        const newErrors: Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje', string>> = {}
+        const allTouched: Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje', boolean>> = { nombre: true, direccion: true, comisionPorcentaje: true }
         err.issues.forEach((issue) => {
-          const key = issue.path[0] as 'nombre' | 'direccion'
+          const key = issue.path[0] as 'nombre' | 'direccion' | 'comisionPorcentaje'
           newErrors[key] = issue.message
         })
         setTouched(allTouched)
@@ -189,6 +203,24 @@ export default function AlojamientoModal({
                     ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]'
                     : 'border-gray-700 focus:border-blue-500'
                 }`}
+              />
+            </div>
+            <div>
+              <input
+                type="number"
+                name="comisionPorcentaje"
+                value={formData.comisionPorcentaje}
+                onChange={handleChange}
+                onBlur={() => handleBlur('comisionPorcentaje')}
+                placeholder={touched.comisionPorcentaje && errors.comisionPorcentaje ? errors.comisionPorcentaje : 'Comisión (%)'}
+                className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+                  touched.comisionPorcentaje && errors.comisionPorcentaje
+                    ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]'
+                    : 'border-gray-700 focus:border-blue-500'
+                }`}
+                min={0}
+                max={100}
+                step="0.1"
               />
             </div>
           </div>

@@ -127,10 +127,12 @@ export async function GET(request: NextRequest) {
     if (propIds.length === 0) {
       return NextResponse.json({ data: [] })
     }
-    const props = await Propiedad.find({ _id: { $in: propIds } }, { nombre: 1 }).lean()
+    const props = await Propiedad.find({ _id: { $in: propIds } }, { nombre: 1, comisionPorcentaje: 1 }).lean()
     const idToName: Record<string, string> = {}
+    const idToPct: Record<string, number> = {}
     for (const p of props) {
       idToName[String(p._id)] = p.nombre || 'Propiedad'
+      idToPct[String(p._id)] = typeof (p as any).comisionPorcentaje === 'number' ? (p as any).comisionPorcentaje : commissionPct
     }
 
     const rows = propIds.map((id) => {
@@ -140,7 +142,7 @@ export async function GET(request: NextRequest) {
       const ingresosFinal = useReal ? (row.ingresosPagos || 0) : (row.ingresosReserva || 0)
       const comisionesFinal = useReal
         ? (row.comisionesPagos || 0)
-        : Math.max(0, (row.ingresosReserva || 0) * (commissionPct / 100))
+        : Math.max(0, (row.ingresosReserva || 0) * ((idToPct[id] ?? commissionPct) / 100))
       const ganancia = comisionesFinal - (row.gastos || 0)
       return {
         propiedad: idToName[id] || 'Propiedad',

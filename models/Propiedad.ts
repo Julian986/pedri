@@ -11,6 +11,7 @@ export interface IPropiedad extends Document {
   habitaciones?: number;
   banos?: number;
   precioPorNoche?: number;
+  comisionPorcentaje?: number;
   imagenes: string[];
   servicios: string[];
   activo: boolean;
@@ -74,6 +75,13 @@ const PropiedadSchema = new Schema<IPropiedad>(
       required: false,
       min: 0,
       default: 0,
+    },
+    comisionPorcentaje: {
+      type: Number,
+      required: false,
+      min: 0,
+      max: 100,
+      default: 12,
     },
     imagenes: [{
       type: String,
