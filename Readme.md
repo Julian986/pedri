@@ -3,7 +3,7 @@ Pedri
 
 Tasks:
 - Implementar filtro de orden por mes o costo
-
+- Integrar calendario del celular
 
 
 

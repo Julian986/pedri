@@ -440,7 +440,7 @@ export default function Home() {
       {!isModalOpen && !isAvailabilityModalOpen && (
         <button
           onClick={() => setIsAvailabilityModalOpen(true)}
-          className="fixed bottom-32 right-4 md:bottom-20 w-14 h-14 bg-gray-700 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-600 transition-colors z-[80]"
+          className="fixed bottom-40 right-4 md:bottom-28 w-14 h-14 bg-yellow-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-600 transition-colors z-[80]"
           aria-label="Buscar disponibilidad"
         >
           <IoHelpCircle className="text-3xl" />
