@@ -1,6 +1,14 @@
 
 Pedri
 
+Tasks:
+- Implementar filtro de orden por mes o costo
+
+
+
+
+
+
 Backend - next js serverless functions como API Routes, MongoDB, Mongoose
 
 - Ultilizaremos Cloudflare WARP para que solo los dispositivos de pe puedan acceder

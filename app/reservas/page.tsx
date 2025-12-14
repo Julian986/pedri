@@ -47,14 +47,20 @@ export default function ReservasPage() {
         const mapped: ReservaItem[] = list.map((r: any) => {
           const origen = r.origen || 'Particular'
           const valorTotal = Number(r.precioTotal || 0)
-          const comision = Math.round(valorTotal * 0.10) // aproximación 10%
+          // Usar el porcentaje de comisión de la propiedad, o 10% por defecto si no está definido
+          const comisionPorcentaje = r.propiedadId?.comisionPorcentaje ?? 10
+          const comision = Math.round(valorTotal * (comisionPorcentaje / 100))
           const propietario = Math.max(0, valorTotal - comision)
           const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
           const toISO = (d: string | Date | undefined) => {
             if (!d) return ''
             const dt = new Date(d)
             if (isNaN(dt.getTime())) return ''
-            return dt.toISOString().slice(0, 10)
+            // Usar métodos locales para evitar problemas de zona horaria
+            const year = dt.getFullYear()
+            const month = String(dt.getMonth() + 1).padStart(2, '0')
+            const day = String(dt.getDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
           }
           return {
             id: String(r._id),
@@ -81,6 +87,13 @@ export default function ReservasPage() {
   }, [])
 
   const formatearFecha = (fecha: string) => {
+    // Si la fecha viene en formato YYYY-MM-DD, parsearla como fecha local
+    if (fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = fecha.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
+    }
+    // Si viene en otro formato, usar el método estándar
     const date = new Date(fecha)
     return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
   }

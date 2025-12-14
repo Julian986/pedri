@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Calendar from '@/components/Calendar'
 import ReservationModal, { ReservationFormData } from '@/components/ReservationModal'
 import ReservationCard from '@/components/ReservationCard'
-import { IoAdd } from 'react-icons/io5'
+import AvailabilityModal from '@/components/AvailabilityModal'
+import { IoAdd, IoHelpCircle } from 'react-icons/io5'
 import { useModal } from '@/contexts/ModalContext'
 
 interface Reservation {
@@ -29,6 +30,7 @@ interface Reservation {
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false)
   const { setIsModalOpen: setGlobalModalOpen } = useModal()
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
@@ -59,8 +61,22 @@ export default function Home() {
         const json = await res.json()
         const list: any[] = Array.isArray(json?.reservas) ? json.reservas : []
         const mapped: Reservation[] = list.map((r) => {
-          const inicio = r.fechaInicio ? new Date(r.fechaInicio) : null
-          const fin = r.fechaFin ? new Date(r.fechaFin) : null
+          // Convertir fechas de forma segura evitando problemas de zona horaria
+          const parseLocalDate = (dateValue: string | Date | null | undefined): Date | null => {
+            if (!dateValue) return null
+            const dt = new Date(dateValue)
+            if (isNaN(dt.getTime())) return null
+            // Si la fecha viene como string ISO (YYYY-MM-DD o con hora), 
+            // extraer año, mes y día y crear fecha local
+            if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+              const [year, month, day] = dateValue.split(/[T\s]/)[0].split('-').map(Number)
+              return new Date(year, month - 1, day)
+            }
+            // Si ya es un objeto Date, usar métodos UTC para extraer componentes y crear fecha local
+            return new Date(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate())
+          }
+          const inicio = parseLocalDate(r.fechaInicio)
+          const fin = parseLocalDate(r.fechaFin)
           const checkInDay = inicio ? inicio.getDate() : 1
           const checkInMonth = inicio ? inicio.getMonth() : currentMonth
           const checkInYear = inicio ? inicio.getFullYear() : currentYear
@@ -420,11 +436,23 @@ export default function Home() {
         {reservationsError && <div className="text-xs text-red-400 mt-2">{reservationsError}</div>}
       </div>
 
+      {/* Botón flotante de buscar disponibilidad */}
+      {!isModalOpen && !isAvailabilityModalOpen && (
+        <button
+          onClick={() => setIsAvailabilityModalOpen(true)}
+          className="fixed bottom-32 right-4 md:bottom-20 w-14 h-14 bg-gray-700 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-600 transition-colors z-[80]"
+          aria-label="Buscar disponibilidad"
+        >
+          <IoHelpCircle className="text-3xl" />
+        </button>
+      )}
+
       {/* Botón flotante de agregar */}
-      {!isModalOpen && (
+      {!isModalOpen && !isAvailabilityModalOpen && (
         <button
           onClick={() => setIsModalOpen(true)}
           className="fixed bottom-20 right-4 md:bottom-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-[80]"
+          aria-label="Agregar reserva"
         >
           <IoAdd className="text-3xl" />
         </button>
@@ -471,6 +499,12 @@ export default function Home() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleNewReservation}
+      />
+
+      {/* Modal de buscar disponibilidad */}
+      <AvailabilityModal
+        isOpen={isAvailabilityModalOpen}
+        onClose={() => setIsAvailabilityModalOpen(false)}
       />
     </main>
   )
