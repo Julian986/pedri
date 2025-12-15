@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { IoAdd, IoPencil, IoTrash } from 'react-icons/io5'
+import { IoAdd } from 'react-icons/io5'
 import { useModal } from '@/contexts/ModalContext'
 import AlojamientoModal from '@/components/AlojamientoModal'
 
@@ -11,6 +11,7 @@ interface Propiedad {
   nombre: string
   direccion?: string
   comisionPorcentaje?: number
+  base?: number
 }
 
 interface Reserva {
@@ -70,7 +71,6 @@ export default function CalendarioPage() {
   const { setIsModalOpen: setGlobalModalOpen } = useModal()
   const [isAlojModalOpen, setIsAlojModalOpen] = useState(false)
   const [propEnEdicion, setPropEnEdicion] = useState<Propiedad | null>(null)
-  const [filaAccionesActiva, setFilaAccionesActiva] = useState<string | null>(null)
 
   // Cerrar panel de ajuste al hacer click fuera
   useEffect(() => {
@@ -84,6 +84,9 @@ export default function CalendarioPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [mostrarAjusteColumna])
+
+  // (Antes) había un modo de “acciones por fila” (íconos editar/borrar).
+  // Ahora el click sobre el alojamiento abre directamente el modal de edición.
 
   // Sincronizar estado local de modal con contexto global para desactivar BottomNav
   useEffect(() => {
@@ -167,7 +170,8 @@ export default function CalendarioPage() {
       const qs = (p: Record<string, string>) => Object.entries(p).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')
 
       const [resPropiedades, resReservas] = await Promise.all([
-        fetchWithTimeout('/api/propiedades'),
+        // Solo propiedades activas
+        fetchWithTimeout('/api/propiedades?activo=true'),
         fetchWithTimeout(`/api/reservas?${qs({ from: fromIso, to: toIso })}`)
       ])
 
@@ -244,14 +248,14 @@ export default function CalendarioPage() {
     setIsAlojModalOpen(true)
   }
 
-  const guardarAlojamiento = async (data: { nombre: string; direccion?: string; comisionPorcentaje?: number }) => {
+  const guardarAlojamiento = async (data: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number }) => {
     try {
       if (propEnEdicion) {
         // Actualizar en backend
         const res = await fetch(`/api/propiedades/${propEnEdicion._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje }),
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base }),
         })
         if (!res.ok) throw new Error(`PUT ${res.status}`)
       } else {
@@ -259,7 +263,7 @@ export default function CalendarioPage() {
         const res = await fetch('/api/propiedades', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje }),
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base }),
         })
         if (!res.ok) throw new Error(`POST ${res.status}`)
       }
@@ -269,10 +273,10 @@ export default function CalendarioPage() {
       console.error('Error guardando alojamiento:', e)
       // fallback a estado local si algo falla
       if (!propEnEdicion) {
-        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje }
+        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base }
         setPropiedades((prev) => [nuevo, ...prev])
       } else {
-        setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje } : p)))
+        setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base } : p)))
       }
     }
   }
@@ -282,11 +286,11 @@ export default function CalendarioPage() {
       const res = await fetch(`/api/propiedades/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(`DELETE ${res.status}`)
       // Refrescar lista
-      const resProps = await fetch('/api/propiedades')
+      const resProps = await fetch('/api/propiedades?activo=true')
       if (resProps.ok) {
         const json = await resProps.json()
         const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
-        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion, comisionPorcentaje: p.comisionPorcentaje })))
+        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion, comisionPorcentaje: p.comisionPorcentaje, base: p.base })))
       } else {
         setPropiedades((prev) => prev.filter((p) => p._id !== id))
       }
@@ -405,38 +409,21 @@ export default function CalendarioPage() {
 
           {/* Filas de propiedades */}
           {propiedades.map((propiedad) => (
-            <div key={propiedad._id} className="group flex border-b border-gray-800 hover:bg-gray-900/30 transition-colors">
+            <div 
+              key={propiedad._id} 
+              className="group flex border-b border-gray-800 hover:bg-gray-900/30 transition-colors"
+            >
               {/* Nombre de la propiedad (columna fija) */}
               <div className="flex-shrink-0 sticky left-0 bg-black z-20 border-r border-gray-700" style={{ width: colWidth }}>
                 <div className="h-14 flex items-center px-4 gap-2">
                   <button
                     type="button"
-                    onClick={() => setFilaAccionesActiva(filaAccionesActiva === propiedad._id ? null : propiedad._id)}
-                    className="text-sm font-medium text-white truncate flex-1 text-left"
-                    title="Mostrar acciones"
+                    onClick={() => abrirEditarAlojamiento(propiedad)}
+                    className="text-sm font-medium text-white truncate flex-1 text-left hover:text-white/90"
+                    title="Editar alojamiento"
                   >
                     {propiedad.nombre}
                   </button>
-                  {filaAccionesActiva === propiedad._id && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => abrirEditarAlojamiento(propiedad)}
-                        className="p-1.5 rounded-md hover:bg-gray-800 text-gray-300"
-                        title="Editar"
-                      >
-                        <IoPencil className="text-[18px]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => eliminarAlojamiento(propiedad._id)}
-                        className="p-1.5 rounded-md hover:bg-gray-800 text-rose-400"
-                        title="Eliminar"
-                      >
-                        <IoTrash className="text-[18px]" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
               
@@ -531,6 +518,7 @@ export default function CalendarioPage() {
           </div>
         </div>
       </div>
+
       {/* Botón flotante para agregar alojamiento */}
       <button
         onClick={abrirNuevoAlojamiento}
@@ -545,7 +533,7 @@ export default function CalendarioPage() {
         isOpen={isAlojModalOpen}
         onClose={() => setIsAlojModalOpen(false)}
         onSubmit={guardarAlojamiento}
-        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion, comisionPorcentaje: propEnEdicion.comisionPorcentaje } : undefined}
+        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion, comisionPorcentaje: propEnEdicion.comisionPorcentaje, base: propEnEdicion.base } : undefined}
         mode={propEnEdicion ? 'edit' : 'create'}
         onDelete={propEnEdicion ? () => { eliminarAlojamiento(propEnEdicion._id); setIsAlojModalOpen(false) } : undefined}
       />

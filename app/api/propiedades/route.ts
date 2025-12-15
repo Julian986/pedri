@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const data = await request.json();
+    console.log('[POST /api/propiedades] Datos recibidos:', JSON.stringify(data, null, 2));
 
     const propiedad = await Propiedad.create(data);
+    console.log('[POST /api/propiedades] Propiedad creada:', JSON.stringify(propiedad.toObject(), null, 2));
 
     return NextResponse.json(
       { propiedad },

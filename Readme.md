@@ -2,8 +2,9 @@
 Pedri
 
 Tasks:
-- Implementar filtro de orden por mes o costo
+- Implementar filtro de orden por mes o costo en la pagina Gastos
 - Integrar calendario del celular
+- En la base de datos se estan guardando muchos datos vacios demas
 
 
 

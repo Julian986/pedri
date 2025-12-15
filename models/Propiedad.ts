@@ -12,6 +12,7 @@ export interface IPropiedad extends Document {
   banos?: number;
   precioPorNoche?: number;
   comisionPorcentaje?: number;
+  base?: number;
   imagenes: string[];
   servicios: string[];
   activo: boolean;
@@ -83,6 +84,12 @@ const PropiedadSchema = new Schema<IPropiedad>(
       max: 100,
       default: 12,
     },
+    base: {
+      type: Number,
+      required: false,
+      min: 1,
+      default: 1,
+    },
     imagenes: [{
       type: String,
     }],
@@ -105,8 +112,17 @@ const PropiedadSchema = new Schema<IPropiedad>(
   }
 );
 
+// En desarrollo, Next.js puede mantener el modelo en caché entre recargas (HMR).
+// Si el modelo ya fue compilado con un schema viejo, Mongoose ignorará campos nuevos (como `base`).
+// Forzamos recompilar el modelo en dev para evitar que se descarten campos.
+const MODEL_NAME = 'Propiedad';
+if (process.env.NODE_ENV === 'development' && mongoose.models[MODEL_NAME]) {
+  delete mongoose.models[MODEL_NAME];
+}
+
 const Propiedad: Model<IPropiedad> =
-  mongoose.models.Propiedad || mongoose.model<IPropiedad>('Propiedad', PropiedadSchema, 'propiedades');
+  (mongoose.models[MODEL_NAME] as Model<IPropiedad>) ||
+  mongoose.model<IPropiedad>(MODEL_NAME, PropiedadSchema, 'propiedades');
 
 export default Propiedad;
 

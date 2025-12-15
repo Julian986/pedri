@@ -39,6 +39,7 @@ export async function PUT(
     await dbConnect();
 
     const data = await request.json();
+    console.log(`[PUT /api/propiedades/${params.id}] Datos recibidos:`, JSON.stringify(data, null, 2));
 
     const propiedad = await Propiedad.findByIdAndUpdate(
       params.id,
@@ -52,6 +53,8 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    console.log(`[PUT /api/propiedades/${params.id}] Propiedad actualizada:`, JSON.stringify(propiedad.toObject(), null, 2));
 
     return NextResponse.json({ propiedad });
   } catch (error) {
