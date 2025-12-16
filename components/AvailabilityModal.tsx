@@ -14,7 +14,12 @@ interface Propiedad {
   nombre: string
   direccion?: string
   ciudad?: string
+  // Precio base por noche (ARS)
   base?: number
+  // Capacidad del alojamiento (personas)
+  capacidad?: number
+  // Fallback (si se usa en otros lados del sistema)
+  precioPorNoche?: number
 }
 
 export default function AvailabilityModal({ isOpen, onClose }: AvailabilityModalProps) {
@@ -186,21 +191,21 @@ export default function AvailabilityModal({ isOpen, onClose }: AvailabilityModal
     const personas = parseInt(cantidadPersonas) || 1
 
     const prop = propiedades.find((p) => String(p._id) === String(alojamientoSeleccionado))
-    const basePersonas = Math.max(1, Number(prop?.base ?? 1))
-    const adicionales = Math.max(0, personas - basePersonas)
+    const precioBaseNoche = Math.max(0, Number(prop?.base ?? prop?.precioPorNoche ?? 0))
+    const capAloj = Math.max(1, Number(prop?.capacidad ?? 1))
 
     // Descuento por noches: 5+ = 12%, 10+ = 18%, 20+ = 25%
     const descuentoPorNochesPct = noches >= 20 ? 25 : noches >= 10 ? 18 : noches >= 5 ? 12 : 0
 
-    // Descuento por ocupación según Base
+    // Descuento por ocupación según capacidad del dpto
     const descuentoPorOcupacionPct = (() => {
-      if (basePersonas === 4) {
+      if (capAloj === 4) {
         if (personas === 3) return 8
         if (personas === 2) return 12
         if (personas === 1) return 15
         return 0
       }
-      if (basePersonas === 3) {
+      if (capAloj === 3) {
         if (personas === 2) return 8
         if (personas === 1) return 12
         return 0
@@ -210,17 +215,15 @@ export default function AvailabilityModal({ isOpen, onClose }: AvailabilityModal
 
     const descuentoTotalPct = Math.min(60, descuentoPorNochesPct + descuentoPorOcupacionPct)
 
-    // Cálculo ficticio: $50.000 por noche + $10.000 por persona adicional (por encima de Base)
-    const costoBase = 50000 * noches
-    const costoPersonas = adicionales > 0 ? adicionales * 10000 * noches : 0
-    const subtotal = costoBase + costoPersonas
+    // Cálculo: precio base por noche * noches, aplicando descuentos
+    const subtotal = Math.round(precioBaseNoche * noches)
     const total = Math.round(subtotal * (1 - descuentoTotalPct / 100))
 
     return {
       noches,
       personas,
-      basePersonas,
-      adicionales,
+      capAloj,
+      precioBaseNoche,
       descuentoPorNochesPct,
       descuentoPorOcupacionPct,
       descuentoTotalPct,
@@ -260,7 +263,7 @@ export default function AvailabilityModal({ isOpen, onClose }: AvailabilityModal
         lineas.push('Alojamientos disponibles:')
         propiedadesDisponibles.forEach((p) => {
           const extra = [p.direccion, p.ciudad].filter(Boolean).join(' - ')
-          const cap = Math.max(1, Number(p.base ?? 1))
+          const cap = Math.max(1, Number(p.capacidad ?? 1))
           const capacidadTxt = `Cap: ${cap} ${personaLabel(cap)}`
           lineas.push(`- ${p.nombre}${extra ? ` (${extra})` : ''} · ${capacidadTxt}`)
         })
@@ -275,7 +278,7 @@ export default function AvailabilityModal({ isOpen, onClose }: AvailabilityModal
       lineas.push(`Período: ${formatYmd(periodoInicio)} a ${formatYmd(periodoFin)}`)
       lineas.push(`Noches: ${cot.noches}`)
       lineas.push(`Cantidad de personas: ${cot.personas}`)
-      lineas.push(`Cap. del alojamiento: ${cot.basePersonas} ${personaLabel(cot.basePersonas)}`)
+      lineas.push(`Cap. del alojamiento: ${cot.capAloj} ${personaLabel(cot.capAloj)}`)
       lineas.push(`Descuento total: ${cot.descuentoTotalPct}%`)
       lineas.push(
         `Total: ${new Intl.NumberFormat('es-AR', {
@@ -474,3 +477,4 @@ export default function AvailabilityModal({ isOpen, onClose }: AvailabilityModal
     </div>
   )
 }
+

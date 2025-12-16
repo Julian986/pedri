@@ -12,6 +12,7 @@ interface Propiedad {
   direccion?: string
   comisionPorcentaje?: number
   base?: number
+  capacidad?: number
 }
 
 interface Reserva {
@@ -145,10 +146,53 @@ export default function CalendarioPage() {
     return mapa
   }, [reservas, mesVisor, añoVisor])
 
+  const [reservasVersion, setReservasVersion] = useState(0)
+  const lastReservasUpdatedAtRef = useRef<string>('')
+
   // Cargar datos
   useEffect(() => {
     cargarDatos()
-  }, [mesVisor, añoVisor])
+  }, [mesVisor, añoVisor, reservasVersion])
+
+  // Escuchar cambios de reservas (edición/alta/cancelación) y refrescar el mes visible
+  useEffect(() => {
+    const KEY = 'reservasUpdatedAt'
+    const bump = () => setReservasVersion((v) => v + 1)
+
+    const syncFromStorage = () => {
+      try {
+        const v = localStorage.getItem(KEY) || ''
+        if (v && v !== lastReservasUpdatedAtRef.current) {
+          lastReservasUpdatedAtRef.current = v
+          bump()
+        }
+      } catch {}
+    }
+
+    const onCustom = () => bump()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === KEY) {
+        lastReservasUpdatedAtRef.current = e.newValue || ''
+        bump()
+      }
+    }
+    const onFocus = () => syncFromStorage()
+    const onVisibility = () => {
+      if (!document.hidden) syncFromStorage()
+    }
+
+    syncFromStorage()
+    window.addEventListener('reservas:changed', onCustom as any)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('reservas:changed', onCustom as any)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
 
   const cargarDatos = async () => {
     setCargando(true)
@@ -248,14 +292,14 @@ export default function CalendarioPage() {
     setIsAlojModalOpen(true)
   }
 
-  const guardarAlojamiento = async (data: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number }) => {
+  const guardarAlojamiento = async (data: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number; capacidad?: number }) => {
     try {
       if (propEnEdicion) {
         // Actualizar en backend
         const res = await fetch(`/api/propiedades/${propEnEdicion._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base }),
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }),
         })
         if (!res.ok) throw new Error(`PUT ${res.status}`)
       } else {
@@ -263,7 +307,7 @@ export default function CalendarioPage() {
         const res = await fetch('/api/propiedades', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base }),
+          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }),
         })
         if (!res.ok) throw new Error(`POST ${res.status}`)
       }
@@ -273,10 +317,16 @@ export default function CalendarioPage() {
       console.error('Error guardando alojamiento:', e)
       // fallback a estado local si algo falla
       if (!propEnEdicion) {
-        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base }
+        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }
         setPropiedades((prev) => [nuevo, ...prev])
       } else {
-        setPropiedades((prev) => prev.map((p) => (p._id === propEnEdicion._id ? { ...p, nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base } : p)))
+        setPropiedades((prev) =>
+          prev.map((p) =>
+            p._id === propEnEdicion._id
+              ? { ...p, nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }
+              : p
+          )
+        )
       }
     }
   }
@@ -290,7 +340,7 @@ export default function CalendarioPage() {
       if (resProps.ok) {
         const json = await resProps.json()
         const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
-        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion, comisionPorcentaje: p.comisionPorcentaje, base: p.base })))
+        setPropiedades(list.map((p) => ({ _id: String(p._id), nombre: p.nombre, direccion: p.direccion, comisionPorcentaje: p.comisionPorcentaje, base: p.base, capacidad: p.capacidad })))
       } else {
         setPropiedades((prev) => prev.filter((p) => p._id !== id))
       }
@@ -533,7 +583,7 @@ export default function CalendarioPage() {
         isOpen={isAlojModalOpen}
         onClose={() => setIsAlojModalOpen(false)}
         onSubmit={guardarAlojamiento}
-        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion, comisionPorcentaje: propEnEdicion.comisionPorcentaje, base: propEnEdicion.base } : undefined}
+        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion, comisionPorcentaje: propEnEdicion.comisionPorcentaje, base: propEnEdicion.base, capacidad: propEnEdicion.capacidad } : undefined}
         mode={propEnEdicion ? 'edit' : 'create'}
         onDelete={propEnEdicion ? () => { eliminarAlojamiento(propEnEdicion._id); setIsAlojModalOpen(false) } : undefined}
       />

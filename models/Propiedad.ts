@@ -12,6 +12,7 @@ export interface IPropiedad extends Document {
   banos?: number;
   precioPorNoche?: number;
   comisionPorcentaje?: number;
+  // Precio base por noche (ARS). Se usa para cotizaciones.
   base?: number;
   imagenes: string[];
   servicios: string[];
@@ -87,8 +88,8 @@ const PropiedadSchema = new Schema<IPropiedad>(
     base: {
       type: Number,
       required: false,
-      min: 1,
-      default: 1,
+      min: 0,
+      default: 0,
     },
     imagenes: [{
       type: String,

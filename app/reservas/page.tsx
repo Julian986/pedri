@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { IoChevronDown, IoClose, IoPencil } from 'react-icons/io5'
+import RangeDatePicker from '@/components/RangeDatePicker'
 
 interface ReservaItem {
   id: string
   desde: string
   hasta: string
+  propiedadId?: string
   propiedad: string
   huesped: string
   telefono: string
@@ -13,16 +16,58 @@ interface ReservaItem {
   comision: number
   propietario: number
   plataforma: 'Airbnb' | 'Booking' | 'Particular' | string
+  numeroHuespedes?: number
+}
+
+interface PropiedadItem {
+  _id: string
+  nombre: string
 }
 
 export default function ReservasPage() {
   const [reservas, setReservas] = useState<ReservaItem[]>([])
+  const [propiedadesCatalogo, setPropiedadesCatalogo] = useState<PropiedadItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [openFiltro, setOpenFiltro] = useState(false)
   const [propiedadFiltro, setPropiedadFiltro] = useState<string>('Todas')
   const propiedades = Array.from(new Set(reservas.map(r => r.propiedad)))
   const filtroRef = useRef<HTMLDivElement | null>(null)
+
+  const emitirCambioReservas = () => {
+    try {
+      localStorage.setItem('reservasUpdatedAt', String(Date.now()))
+    } catch {}
+    try {
+      window.dispatchEvent(new Event('reservas:changed'))
+    } catch {}
+  }
+
+  // Parse seguro para fechas "YYYY-MM-DD" sin desfase por timezone.
+  // Evita el bug de `new Date('YYYY-MM-DD')` que se interpreta en UTC y en AR (UTC-3) cae en el día anterior.
+  const parseFechaYMD = (value: string) => {
+    const [y, m, d] = (value || '').slice(0, 10).split('-')
+    return new Date(Number(y), Number(m) - 1, Number(d))
+  }
+
+  const toMiddayUtcIso = (ymd: string) => {
+    if (!ymd) return ''
+    return new Date(`${ymd}T12:00:00Z`).toISOString()
+  }
+
+  // Modal editar reserva
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState<{
+    id: string
+    propiedadId: string
+    desde: string
+    hasta: string
+    huesped: string
+    telefono: string
+    plataforma: string
+    valorTotal: string
+    numeroHuespedes: string
+  } | null>(null)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -34,6 +79,21 @@ export default function ReservasPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openFiltro])
+
+  useEffect(() => {
+    const loadProps = async () => {
+      try {
+        const res = await fetch('/api/propiedades?activo=true')
+        if (!res.ok) throw new Error(String(res.status))
+        const json = await res.json()
+        const list: any[] = Array.isArray(json?.propiedades) ? json.propiedades : []
+        setPropiedadesCatalogo(list.map((p) => ({ _id: String(p._id), nombre: p.nombre })))
+      } catch {
+        setPropiedadesCatalogo([])
+      }
+    }
+    loadProps()
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -50,16 +110,18 @@ export default function ReservasPage() {
           const comision = Math.round(valorTotal * 0.10) // aproximación 10%
           const propietario = Math.max(0, valorTotal - comision)
           const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
-          const toISO = (d: string | Date | undefined) => {
+          const toYMD = (d: string | Date | undefined) => {
             if (!d) return ''
+            if (typeof d === 'string') return d.slice(0, 10)
             const dt = new Date(d)
             if (isNaN(dt.getTime())) return ''
             return dt.toISOString().slice(0, 10)
           }
           return {
             id: String(r._id),
-            desde: toISO(r.fechaInicio),
-            hasta: toISO(r.fechaFin),
+            desde: toYMD(r.fechaInicio),
+            hasta: toYMD(r.fechaFin),
+            propiedadId: r.propiedadId?._id ? String(r.propiedadId._id) : (r.propiedadId ? String(r.propiedadId) : ''),
             propiedad: propNombre,
             huesped: r.nombreHuesped || '',
             telefono: r.telefonoHuesped || '',
@@ -67,6 +129,7 @@ export default function ReservasPage() {
             comision,
             propietario,
             plataforma: origen,
+            numeroHuespedes: typeof r.numeroHuespedes === 'number' ? r.numeroHuespedes : undefined,
           }
         })
         setReservas(mapped)
@@ -81,7 +144,9 @@ export default function ReservasPage() {
   }, [])
 
   const formatearFecha = (fecha: string) => {
-    const date = new Date(fecha)
+    if (!fecha) return ''
+    const date = parseFechaYMD(fecha)
+    if (isNaN(date.getTime())) return ''
     return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
   }
 
@@ -103,6 +168,97 @@ export default function ReservasPage() {
         return 'bg-green-500'
       default:
         return 'bg-gray-500'
+    }
+  }
+
+  const abrirEdicion = (r: ReservaItem) => {
+    setErrorMsg(null)
+    setEditForm({
+      id: r.id,
+      propiedadId: r.propiedadId || '',
+      desde: r.desde,
+      hasta: r.hasta,
+      huesped: r.huesped,
+      telefono: r.telefono,
+      plataforma: r.plataforma || 'Particular',
+      valorTotal: String(r.valorTotal ?? 0),
+      numeroHuespedes: String(r.numeroHuespedes ?? 1),
+    })
+    setIsEditOpen(true)
+  }
+
+  const guardarEdicion = async () => {
+    if (!editForm) return
+    try {
+      setErrorMsg(null)
+      const payload = {
+        propiedadId: editForm.propiedadId,
+        nombreHuesped: editForm.huesped,
+        telefonoHuesped: editForm.telefono,
+        fechaInicio: toMiddayUtcIso(editForm.desde),
+        fechaFin: toMiddayUtcIso(editForm.hasta),
+        numeroHuespedes: Math.max(1, Number(editForm.numeroHuespedes || 1)),
+        precioTotal: Math.max(0, Number(editForm.valorTotal || 0)),
+        origen: editForm.plataforma || 'Particular',
+      }
+
+      const res = await fetch(`/api/reservas/${editForm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        let msg = `No se pudo actualizar la reserva (HTTP ${res.status}).`
+        try {
+          const j = await res.json()
+          if (j?.error) msg = j.error
+        } catch {}
+        throw new Error(msg)
+      }
+
+      setIsEditOpen(false)
+      setEditForm(null)
+
+      // Refrescar listado
+      const rr = await fetch('/api/reservas')
+      if (rr.ok) {
+        const json = await rr.json()
+        const list = Array.isArray(json?.reservas) ? json.reservas : []
+        const mapped: ReservaItem[] = list.map((r: any) => {
+          const origen = r.origen || 'Particular'
+          const valorTotal = Number(r.precioTotal || 0)
+          const comision = Math.round(valorTotal * 0.10)
+          const propietario = Math.max(0, valorTotal - comision)
+          const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
+          const toYMD = (d: string | Date | undefined) => {
+            if (!d) return ''
+            if (typeof d === 'string') return d.slice(0, 10)
+            const dt = new Date(d)
+            if (isNaN(dt.getTime())) return ''
+            return dt.toISOString().slice(0, 10)
+          }
+          return {
+            id: String(r._id),
+            desde: toYMD(r.fechaInicio),
+            hasta: toYMD(r.fechaFin),
+            propiedadId: r.propiedadId?._id ? String(r.propiedadId._id) : (r.propiedadId ? String(r.propiedadId) : ''),
+            propiedad: propNombre,
+            huesped: r.nombreHuesped || '',
+            telefono: r.telefonoHuesped || '',
+            valorTotal,
+            comision,
+            propietario,
+            plataforma: origen,
+            numeroHuespedes: typeof r.numeroHuespedes === 'number' ? r.numeroHuespedes : undefined,
+          }
+        })
+        setReservas(mapped)
+      }
+
+      // Notificar a otras pantallas (Inicio/Calendario) para que refetch
+      emitirCambioReservas()
+    } catch (e: any) {
+      setErrorMsg(e?.message || 'No se pudo actualizar la reserva.')
     }
   }
 
@@ -175,10 +331,21 @@ export default function ReservasPage() {
                     {formatearFecha(reserva.hasta)}
                   </span>
                 </div>
-                <div className="bg-gray-800 px-4 py-1.5 rounded-full">
-                  <span className="text-xs font-medium text-white">
-                    {reserva.plataforma}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => abrirEdicion(reserva)}
+                    className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                    title="Editar reserva"
+                    aria-label="Editar reserva"
+                  >
+                    <IoPencil className="text-white" />
+                  </button>
+                  <div className="bg-gray-800 px-4 py-1.5 rounded-full">
+                    <span className="text-xs font-medium text-white">
+                      {reserva.plataforma}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -221,6 +388,113 @@ export default function ReservasPage() {
         </div>
         )}
       </div>
+
+      {/* Modal editar reserva */}
+      {isEditOpen && editForm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[95] flex items-center justify-center px-4">
+          <div className="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-md p-5 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Editar reserva</h3>
+              <button
+                type="button"
+                onClick={() => { setIsEditOpen(false); setEditForm(null) }}
+                className="p-2 rounded-full hover:bg-gray-800"
+                aria-label="Cerrar"
+              >
+                <IoClose className="text-xl text-white" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
+                <select
+                  value={editForm.propiedadId}
+                  onChange={(e) => setEditForm((p) => p ? ({ ...p, propiedadId: e.target.value }) : p)}
+                  className="w-full appearance-none bg-gray-800 text-white border border-gray-700 rounded-lg px-4 pr-12 py-3 focus:outline-none focus:border-blue-500"
+                >
+                  <option value="" disabled>Seleccionar alojamiento</option>
+                  {propiedadesCatalogo.map((p) => (
+                    <option key={p._id} value={p._id}>{p.nombre}</option>
+                  ))}
+                </select>
+                <IoChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+
+              <input
+                type="text"
+                value={editForm.huesped}
+                onChange={(e) => setEditForm((p) => p ? ({ ...p, huesped: e.target.value }) : p)}
+                placeholder="Nombre del huésped"
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+              />
+
+              <input
+                type="text"
+                value={editForm.telefono}
+                onChange={(e) => setEditForm((p) => p ? ({ ...p, telefono: e.target.value }) : p)}
+                placeholder="Teléfono"
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+              />
+
+              <RangeDatePicker
+                startDate={editForm.desde}
+                endDate={editForm.hasta}
+                onChange={(start, end) => setEditForm((p) => p ? ({ ...p, desde: start, hasta: end }) : p)}
+                trigger="split"
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  value={editForm.numeroHuespedes}
+                  onChange={(e) => setEditForm((p) => p ? ({ ...p, numeroHuespedes: e.target.value }) : p)}
+                  placeholder="Huéspedes"
+                  className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={editForm.valorTotal}
+                  onChange={(e) => setEditForm((p) => p ? ({ ...p, valorTotal: e.target.value }) : p)}
+                  placeholder="Total (ARS)"
+                  className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={editForm.plataforma}
+                  onChange={(e) => setEditForm((p) => p ? ({ ...p, plataforma: e.target.value }) : p)}
+                  className="w-full appearance-none bg-gray-800 text-white border border-gray-700 rounded-lg px-4 pr-12 py-3 focus:outline-none focus:border-blue-500"
+                >
+                  {['Airbnb', 'Booking', 'Facebook', 'Mercado Libre', 'Recomendado', 'Particular', 'Otro'].map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+                <IoChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setIsEditOpen(false); setEditForm(null) }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-200 border border-gray-700 hover:bg-gray-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={guardarEdicion}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

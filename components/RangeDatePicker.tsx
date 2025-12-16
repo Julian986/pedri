@@ -7,10 +7,23 @@ interface RangeDatePickerProps {
   startDate: string // formato YYYY-MM-DD
   endDate: string // formato YYYY-MM-DD
   onChange: (startDate: string, endDate: string) => void
+  trigger?: 'single' | 'split'
+  placeholder?: string
+  placeholderStart?: string
+  placeholderEnd?: string
 }
 
-export default function RangeDatePicker({ startDate, endDate, onChange }: RangeDatePickerProps) {
+export default function RangeDatePicker({
+  startDate,
+  endDate,
+  onChange,
+  trigger = 'single',
+  placeholder = 'Seleccionar periodo',
+  placeholderStart = 'Fecha inicio',
+  placeholderEnd = 'Fecha fin',
+}: RangeDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [pickMode, setPickMode] = useState<'range' | 'start' | 'end'>('range')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [tempStartDate, setTempStartDate] = useState<string>('')
   const [tempEndDate, setTempEndDate] = useState<string>('')
@@ -26,12 +39,13 @@ export default function RangeDatePicker({ startDate, endDate, onChange }: RangeD
       setTempStartDate(startDate)
       setTempEndDate(endDate)
       // Si ya hay una fecha de inicio, navegar a ese mes
-      if (startDate) {
-        const date = new Date(startDate + 'T00:00:00')
+      const base = (pickMode === 'end' ? endDate : startDate) || startDate || endDate
+      if (base) {
+        const date = new Date(base + 'T00:00:00')
         setCurrentDate(date)
       }
     }
-  }, [isOpen, startDate, endDate])
+  }, [isOpen, startDate, endDate, pickMode])
 
   const monthNames = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -125,6 +139,30 @@ export default function RangeDatePicker({ startDate, endDate, onChange }: RangeD
     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const clickedDate = new Date(year, month, day)
 
+    // Modo selección simple: si se abrió desde Inicio o Fin, setear ese campo y cerrar
+    if (pickMode === 'start') {
+      const nextStart = dateString
+      let nextEnd = tempEndDate
+      if (nextEnd) {
+        const startObj = new Date(nextStart + 'T00:00:00')
+        const endObj = new Date(nextEnd + 'T00:00:00')
+        if (endObj <= startObj) nextEnd = ''
+      }
+      setTempStartDate(nextStart)
+      setTempEndDate(nextEnd)
+      onChange(nextStart, nextEnd)
+      setIsOpen(false)
+      return
+    }
+
+    if (pickMode === 'end') {
+      const nextEnd = dateString
+      setTempEndDate(nextEnd)
+      onChange(tempStartDate, nextEnd)
+      setIsOpen(false)
+      return
+    }
+
     // Si no hay fecha de inicio, establecer como inicio
     if (!tempStartDate) {
       setTempStartDate(dateString)
@@ -204,40 +242,99 @@ export default function RangeDatePicker({ startDate, endDate, onChange }: RangeD
 
   return (
     <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-zinc-800 text-white border border-gray-700 rounded-lg px-4 py-3 text-left focus:outline-none focus:border-blue-500 flex items-center justify-between"
-      >
-        {startDate && endDate ? (
-          <span>{formatDisplayDate(startDate)} - {formatDisplayDate(endDate)}</span>
-        ) : startDate ? (
-          <span>{formatDisplayDate(startDate)} - <span className="text-gray-500">...</span></span>
-        ) : (
-          <span className="text-gray-500">Seleccionar periodo</span>
-        )}
-        {(startDate || endDate) && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleClear()
+      {trigger === 'split' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setPickMode('start')
+              setIsOpen(true)
             }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
+            className="w-full bg-zinc-800 text-white border border-gray-700 rounded-lg px-4 py-3 text-left focus:outline-none focus:border-blue-500 flex items-center justify-between"
+          >
+            {startDate ? (
+              <span>{formatDisplayDate(startDate)}</span>
+            ) : (
+              <span className="text-gray-500">{placeholderStart}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPickMode('end')
+              setIsOpen(true)
+            }}
+            className="w-full bg-zinc-800 text-white border border-gray-700 rounded-lg px-4 py-3 text-left focus:outline-none focus:border-blue-500 flex items-center justify-between"
+          >
+            {endDate ? (
+              <span>{formatDisplayDate(endDate)}</span>
+            ) : (
+              <span className="text-gray-500">{placeholderEnd}</span>
+            )}
+
+            {(startDate || endDate) && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClear()
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleClear()
+                  }
+                }}
+                className="ml-2 p-1 hover:bg-gray-700 rounded-full transition-colors"
+                aria-label="Limpiar selección"
+              >
+                <IoClose className="text-lg" />
+              </span>
+            )}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setPickMode('range')
+            setIsOpen(!isOpen)
+          }}
+          className="w-full bg-zinc-800 text-white border border-gray-700 rounded-lg px-4 py-3 text-left focus:outline-none focus:border-blue-500 flex items-center justify-between"
+        >
+          {startDate && endDate ? (
+            <span>{formatDisplayDate(startDate)} - {formatDisplayDate(endDate)}</span>
+          ) : startDate ? (
+            <span>{formatDisplayDate(startDate)} - <span className="text-gray-500">...</span></span>
+          ) : (
+            <span className="text-gray-500">{placeholder}</span>
+          )}
+          {(startDate || endDate) && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
                 e.stopPropagation()
                 handleClear()
-              }
-            }}
-            className="ml-2 p-1 hover:bg-gray-700 rounded-full transition-colors"
-            aria-label="Limpiar selección"
-          >
-            <IoClose className="text-lg" />
-          </span>
-        )}
-      </button>
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleClear()
+                }
+              }}
+              className="ml-2 p-1 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Limpiar selección"
+            >
+              <IoClose className="text-lg" />
+            </span>
+          )}
+        </button>
+      )}
 
       {isOpen && (
         <div 

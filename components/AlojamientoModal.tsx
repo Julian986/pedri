@@ -7,8 +7,8 @@ import { z } from 'zod'
 interface AlojamientoModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number }) => void
-  initialData?: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number }
+  onSubmit: (data: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number; capacidad?: number }) => void
+  initialData?: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number; capacidad?: number }
   mode?: 'create' | 'edit'
   onDelete?: () => void
 }
@@ -39,7 +39,15 @@ const alojamientoSchema = z.object({
       const n = Number(v)
       return Number.isNaN(n) ? NaN : n
     },
-    z.number().min(1, 'Mínimo 1 persona').optional()
+    z.number().min(0, 'Mínimo 0').optional()
+  ),
+  capacidad: z.preprocess(
+    (v) => {
+      if (v === '' || v === undefined || v === null) return undefined
+      const n = Number(v)
+      return Number.isNaN(n) ? NaN : n
+    },
+    z.number().min(1, 'Mínimo 1').optional()
   ),
 })
 
@@ -51,14 +59,15 @@ export default function AlojamientoModal({
   mode = 'create',
   onDelete,
 }: AlojamientoModalProps) {
-  const [formData, setFormData] = useState<{ nombre: string; direccion: string; comisionPorcentaje: string; base: string }>({
+  const [formData, setFormData] = useState<{ nombre: string; direccion: string; comisionPorcentaje: string; base: string; capacidad: string }>({
     nombre: initialData?.nombre ?? '',
     direccion: initialData?.direccion ?? '',
     comisionPorcentaje: initialData?.comisionPorcentaje != null ? String(initialData.comisionPorcentaje) : '',
     base: initialData?.base != null ? String(initialData.base) : '',
+    capacidad: initialData?.capacidad != null ? String(initialData.capacidad) : '',
   })
-  const [errors, setErrors] = useState<Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base', string>>>({})
-  const [touched, setTouched] = useState<Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base', boolean>>>({})
+  const [errors, setErrors] = useState<Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad', string>>>({})
+  const [touched, setTouched] = useState<Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad', boolean>>>({})
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Sincronizar cuando cambie initialData (abrir modal en editar)
@@ -68,6 +77,7 @@ export default function AlojamientoModal({
       direccion: initialData?.direccion ?? '',
       comisionPorcentaje: initialData?.comisionPorcentaje != null ? String(initialData.comisionPorcentaje) : '',
       base: initialData?.base != null ? String(initialData.base) : '',
+      capacidad: initialData?.capacidad != null ? String(initialData.capacidad) : '',
     })
     setErrors({})
     setTouched({})
@@ -92,12 +102,12 @@ export default function AlojamientoModal({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name as 'nombre' | 'direccion' | 'comisionPorcentaje' | 'base']) {
+    if (errors[name as 'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad']) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
   }
 
-  const handleBlur = (field: 'nombre' | 'direccion' | 'comisionPorcentaje' | 'base') => {
+  const handleBlur = (field: 'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad') => {
     setTouched((prev) => ({ ...prev, [field]: true }))
     try {
       alojamientoSchema.shape[field].parse(formData[field])
@@ -109,7 +119,7 @@ export default function AlojamientoModal({
   }
 
   const handleReset = () => {
-    setFormData({ nombre: '', direccion: '', comisionPorcentaje: '', base: '' })
+    setFormData({ nombre: '', direccion: '', comisionPorcentaje: '', base: '', capacidad: '' })
     setErrors({})
     setTouched({})
   }
@@ -123,15 +133,16 @@ export default function AlojamientoModal({
         direccion: parsed.direccion || undefined,
         comisionPorcentaje: parsed.comisionPorcentaje,
         base: parsed.base,
+        capacidad: parsed.capacidad,
       })
       handleReset()
       onClose()
     } catch (err) {
       if (err instanceof z.ZodError) {
-        const newErrors: Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base', string>> = {}
-        const allTouched: Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base', boolean>> = { nombre: true, direccion: true, comisionPorcentaje: true, base: true }
+        const newErrors: Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad', string>> = {}
+        const allTouched: Partial<Record<'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad', boolean>> = { nombre: true, direccion: true, comisionPorcentaje: true, base: true, capacidad: true }
         err.issues.forEach((issue) => {
-          const key = issue.path[0] as 'nombre' | 'direccion' | 'comisionPorcentaje' | 'base'
+          const key = issue.path[0] as 'nombre' | 'direccion' | 'comisionPorcentaje' | 'base' | 'capacidad'
           newErrors[key] = issue.message
         })
         setTouched(allTouched)
@@ -245,6 +256,23 @@ export default function AlojamientoModal({
                 placeholder={touched.base && errors.base ? errors.base : 'Base'}
                 className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
                   touched.base && errors.base
+                    ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]'
+                    : 'border-gray-700 focus:border-blue-500'
+                }`}
+                min={0}
+                step="1"
+              />
+            </div>
+            <div>
+              <input
+                type="number"
+                name="capacidad"
+                value={formData.capacidad}
+                onChange={handleChange}
+                onBlur={() => handleBlur('capacidad')}
+                placeholder={touched.capacidad && errors.capacidad ? errors.capacidad : 'Capacidad'}
+                className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+                  touched.capacidad && errors.capacidad
                     ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]'
                     : 'border-gray-700 focus:border-blue-500'
                 }`}

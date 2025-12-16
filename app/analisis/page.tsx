@@ -39,6 +39,48 @@ export default function AnalisisPage() {
   const [detalleProp, setDetalleProp] = useState<Array<{ propiedad: string; ingresos: number; comisiones: number; propietarios: number; gastos: number; ganancia: number; margen: number }>>([])
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [reservasVersion, setReservasVersion] = useState(0)
+  const lastReservasUpdatedAtRef = useRef<string>('')
+
+  // Escuchar cambios de reservas (edición/alta/cancelación) para refrescar análisis
+  useEffect(() => {
+    const KEY = 'reservasUpdatedAt'
+    const bump = () => setReservasVersion((v) => v + 1)
+
+    const syncFromStorage = () => {
+      try {
+        const v = localStorage.getItem(KEY) || ''
+        if (v && v !== lastReservasUpdatedAtRef.current) {
+          lastReservasUpdatedAtRef.current = v
+          bump()
+        }
+      } catch {}
+    }
+
+    const onCustom = () => bump()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === KEY) {
+        lastReservasUpdatedAtRef.current = e.newValue || ''
+        bump()
+      }
+    }
+    const onFocus = () => syncFromStorage()
+    const onVisibility = () => {
+      if (!document.hidden) syncFromStorage()
+    }
+
+    syncFromStorage()
+    window.addEventListener('reservas:changed', onCustom as any)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('reservas:changed', onCustom as any)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
 
   const computeRange = () => {
     if (modo === 'mes') {
@@ -72,7 +114,7 @@ export default function AnalisisPage() {
     }).catch(() => {
       setErrorMsg('No se pudieron cargar los datos de análisis.')
     }).finally(() => setLoading(false))
-  }, [modo, selectedMonth, selectedYear])
+  }, [modo, selectedMonth, selectedYear, reservasVersion])
 
   const kpis = useMemo(() => {
     const ingresos = detalleProp.reduce((a, r) => a + (r.ingresos || 0), 0)

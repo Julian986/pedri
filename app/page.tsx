@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Calendar from '@/components/Calendar'
 import ReservationModal, { ReservationFormData } from '@/components/ReservationModal'
 import ReservationCard from '@/components/ReservationCard'
@@ -47,6 +47,48 @@ export default function Home() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [reservationsLoading, setReservationsLoading] = useState<boolean>(true)
   const [reservationsError, setReservationsError] = useState<string | null>(null)
+  const [reservasVersion, setReservasVersion] = useState(0)
+  const lastReservasUpdatedAtRef = useRef<string>('')
+
+  // Escuchar cambios de reservas (ediciones desde /reservas, etc.) y forzar refetch del mes visible
+  useEffect(() => {
+    const KEY = 'reservasUpdatedAt'
+    const bump = () => setReservasVersion((v) => v + 1)
+
+    const syncFromStorage = () => {
+      try {
+        const v = localStorage.getItem(KEY) || ''
+        if (v && v !== lastReservasUpdatedAtRef.current) {
+          lastReservasUpdatedAtRef.current = v
+          bump()
+        }
+      } catch {}
+    }
+
+    const onCustom = () => bump()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === KEY) {
+        lastReservasUpdatedAtRef.current = e.newValue || ''
+        bump()
+      }
+    }
+    const onFocus = () => syncFromStorage()
+    const onVisibility = () => {
+      if (!document.hidden) syncFromStorage()
+    }
+
+    syncFromStorage()
+    window.addEventListener('reservas:changed', onCustom as any)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('reservas:changed', onCustom as any)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
 
   // Cargar reservas reales para el mes visible
   useEffect(() => {
@@ -102,7 +144,7 @@ export default function Home() {
       }
     }
     load()
-  }, [currentMonth, currentYear])
+  }, [currentMonth, currentYear, reservasVersion])
 
   // Calcular indicadores de reservas por día para el mes actual del calendario
   const reservationIndicators: { [key: number]: { checkIn: boolean; checkOut: boolean } } = {}
@@ -314,6 +356,14 @@ export default function Home() {
         setTimeout(() => setToastMsg(null), 4000)
         return
       }
+
+      // Notificar a otras pantallas para que se refresquen
+      try {
+        localStorage.setItem('reservasUpdatedAt', String(Date.now()))
+      } catch {}
+      try {
+        window.dispatchEvent(new Event('reservas:changed'))
+      } catch {}
 
       // Mostrar éxito inmediatamente y refrescar listado del mes visible
       setToastOk('Reserva agregada correctamente')

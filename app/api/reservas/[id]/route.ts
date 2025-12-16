@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Reserva from '@/models/Reserva';
-import { requireAuth } from '@/lib/middleware';
 
 // GET - Obtener una reserva por ID
 export async function GET(
@@ -37,14 +36,47 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-
     await dbConnect();
 
     const data = await request.json();
+
+    // Validaciones de fechas si vienen en el payload
+    const start = data?.fechaInicio ? new Date(data.fechaInicio) : undefined;
+    const end = data?.fechaFin ? new Date(data.fechaFin) : undefined;
+    if (start && (isNaN(start.getTime()))) {
+      return NextResponse.json({ error: 'Fecha de inicio inválida' }, { status: 400 });
+    }
+    if (end && (isNaN(end.getTime()))) {
+      return NextResponse.json({ error: 'Fecha de fin inválida' }, { status: 400 });
+    }
+    if (start && end && end <= start) {
+      return NextResponse.json(
+        { error: 'La fecha de fin debe ser posterior a la fecha de inicio' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar disponibilidad si se está editando rango/propiedad
+    if ((data?.propiedadId || data?.fechaInicio || data?.fechaFin) && start && end) {
+      const conflicto = await Reserva.findOne({
+        _id: { $ne: params.id },
+        propiedadId: data.propiedadId,
+        estado: { $nin: ['cancelada'] },
+        $or: [
+          {
+            // Regla de no-solapamiento con rango [inicio, fin): permitir checkout=checkin siguiente
+            fechaInicio: { $lt: end },
+            fechaFin: { $gt: start },
+          },
+        ],
+      });
+      if (conflicto) {
+        return NextResponse.json(
+          { error: 'La propiedad no está disponible en esas fechas' },
+          { status: 400 }
+        );
+      }
+    }
 
     const reserva = await Reserva.findByIdAndUpdate(
       params.id,
@@ -75,11 +107,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authResult = requireAuth(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-
     await dbConnect();
 
     const reserva = await Reserva.findByIdAndUpdate(
