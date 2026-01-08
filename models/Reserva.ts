@@ -51,6 +51,7 @@ const ReservaSchema = new Schema<IReserva>(
       type: Number,
       required: [true, 'El número de huéspedes es requerido'],
       min: 1,
+      default: 1,
     },
     precioTotal: {
       type: Number,

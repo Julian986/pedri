@@ -17,6 +17,7 @@ export interface ReservationFormData {
   alojamiento: string
   huesped: string
   telefono: string
+  numeroHuespedes: string
   total: string
   sena: string
   plataforma: '' | 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Otro' | 'Particular'
@@ -29,6 +30,14 @@ const reservationSchema = z.object({
   alojamiento: z.string().min(1, 'El alojamiento es requerido'),
   huesped: z.string().min(1, 'El nombre del huésped es requerido'),
   telefono: z.string().optional().or(z.literal('')),
+  numeroHuespedes: z
+    .string()
+    .min(1, 'La cantidad de huéspedes es requerida')
+    .transform((v) => String(v).trim())
+    .refine((v) => {
+      const n = Number(v)
+      return Number.isFinite(n) && n >= 1
+    }, { message: 'Debe ser un número mayor o igual a 1' }),
   total: z.string().min(1, 'El total es requerido'),
   sena: z.string().optional().or(z.literal('')),
   plataforma: z
@@ -48,9 +57,10 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
     alojamiento: '',
     huesped: '',
     telefono: '',
+    numeroHuespedes: '',
     total: '',
     sena: '',
-    plataforma: 'Particular',
+    plataforma: '',
   })
   
   const [errors, setErrors] = useState<Partial<Record<keyof ReservationFormData, string>>>({})
@@ -143,9 +153,10 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
       alojamiento: '',
       huesped: '',
       telefono: '',
+      numeroHuespedes: '',
       total: '',
       sena: '',
-      plataforma: 'Particular',
+      plataforma: '',
     })
     setErrors({})
     setTouched({})
@@ -162,6 +173,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
       onSubmit({
         ...formData,
         plataforma: (parsed as any).plataforma || 'Particular',
+        numeroHuespedes: String((parsed as any).numeroHuespedes),
         sena: formData.sena || '',
       })
       // Resetear formulario
@@ -198,7 +210,7 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
   if (!isOpen) return null
 
   const PLATAFORMA_OPCIONES: ReservationFormData['plataforma'][] = [
-    'Airbnb','Booking','Facebook','Mercado Libre','Recomendado','Otro','Particular'
+    'Airbnb','Booking','Facebook','Mercado Libre','Recomendado','Particular','Otro'
   ]
 
   return (
@@ -393,8 +405,24 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
             />
           </div>
 
-          {/* Total y Seña */}
+          {/* Huéspedes y Total */}
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <input
+                type="number"
+                name="numeroHuespedes"
+                min={1}
+                value={formData.numeroHuespedes}
+                onChange={handleChange}
+                onBlur={() => handleBlur('numeroHuespedes')}
+                placeholder={touched.numeroHuespedes && errors.numeroHuespedes ? errors.numeroHuespedes : 'Huéspedes'}
+                className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+                  touched.numeroHuespedes && errors.numeroHuespedes
+                    ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]'
+                    : 'border-gray-700 focus:border-blue-500'
+                }`}
+              />
+            </div>
             <div>
               <input
                 type="number"
@@ -410,21 +438,23 @@ export default function ReservationModal({ isOpen, onClose, onSubmit }: Reservat
                 }`}
               />
             </div>
-            <div>
-              <input
-                type="number"
-                name="sena"
-                value={formData.sena}
-                onChange={handleChange}
-                onBlur={() => handleBlur('sena')}
-                placeholder={touched.sena && errors.sena ? errors.sena : 'Seña'}
-                className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
-                  touched.sena && errors.sena 
-                    ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]' 
-                    : 'border-gray-700 focus:border-blue-500'
-                }`}
-              />
-            </div>
+          </div>
+
+          {/* Seña */}
+          <div>
+            <input
+              type="number"
+              name="sena"
+              value={formData.sena}
+              onChange={handleChange}
+              onBlur={() => handleBlur('sena')}
+              placeholder={touched.sena && errors.sena ? errors.sena : 'Seña'}
+              className={`w-full bg-gray-800 text-white border rounded-lg px-4 py-3 focus:outline-none ${
+                touched.sena && errors.sena
+                  ? 'border-red-500 placeholder-red-500 placeholder:text-[0.8rem]'
+                  : 'border-gray-700 focus:border-blue-500'
+              }`}
+            />
           </div>
           </div>
 

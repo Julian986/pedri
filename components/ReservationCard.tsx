@@ -1,6 +1,6 @@
 'use client'
 
-import { BiCalendar, BiMoon, BiPhone } from 'react-icons/bi'
+import { BiCalendar, BiMoon, BiPhone, BiUser } from 'react-icons/bi'
 import { IoChatbubbleOutline, IoCloseCircleOutline, IoArrowUndoCircleOutline } from 'react-icons/io5'
 
 export interface Reservation {
@@ -134,6 +134,10 @@ export default function ReservationCard({
               <IoCloseCircleOutline className="text-gray-400 text-xl" />
             </button>
           )}
+        </div>
+        <div className="flex items-center gap-2 text-gray-400">
+          <BiUser className="text-lg" />
+          <span>{reservation.clientes} huéspedes</span>
         </div>
         <div className="flex items-center gap-2 text-gray-400">
           <BiPhone className="text-lg" />

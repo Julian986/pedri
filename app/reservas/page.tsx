@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { IoChevronDown, IoClose, IoPencil } from 'react-icons/io5'
+import { IoChevronDown, IoClose, IoPencil, IoTrashOutline } from 'react-icons/io5'
 import RangeDatePicker from '@/components/RangeDatePicker'
 
 interface ReservaItem {
@@ -29,6 +29,8 @@ export default function ReservasPage() {
   const [propiedadesCatalogo, setPropiedadesCatalogo] = useState<PropiedadItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editDeleting, setEditDeleting] = useState(false)
   const [openFiltro, setOpenFiltro] = useState(false)
   const [propiedadFiltro, setPropiedadFiltro] = useState<string>('Todas')
   const propiedades = Array.from(new Set(reservas.map(r => r.propiedad)))
@@ -53,6 +55,39 @@ export default function ReservasPage() {
   const toMiddayUtcIso = (ymd: string) => {
     if (!ymd) return ''
     return new Date(`${ymd}T12:00:00Z`).toISOString()
+  }
+
+  const mapReservasFromApi = (list: any[]): ReservaItem[] => {
+    const safeList = Array.isArray(list) ? list : []
+    const filtered = safeList.filter((r: any) => String(r?.estado || '').toLowerCase() !== 'cancelada')
+    return filtered.map((r: any) => {
+      const origen = r.origen || 'Particular'
+      const valorTotal = Number(r.precioTotal || 0)
+      const comision = Math.round(valorTotal * 0.10) // aproximación 10%
+      const propietario = Math.max(0, valorTotal - comision)
+      const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
+      const toYMD = (d: string | Date | undefined) => {
+        if (!d) return ''
+        if (typeof d === 'string') return d.slice(0, 10)
+        const dt = new Date(d)
+        if (isNaN(dt.getTime())) return ''
+        return dt.toISOString().slice(0, 10)
+      }
+      return {
+        id: String(r._id),
+        desde: toYMD(r.fechaInicio),
+        hasta: toYMD(r.fechaFin),
+        propiedadId: r.propiedadId?._id ? String(r.propiedadId._id) : (r.propiedadId ? String(r.propiedadId) : ''),
+        propiedad: propNombre,
+        huesped: r.nombreHuesped || '',
+        telefono: r.telefonoHuesped || '',
+        valorTotal,
+        comision,
+        propietario,
+        plataforma: origen,
+        numeroHuespedes: typeof r.numeroHuespedes === 'number' ? r.numeroHuespedes : undefined,
+      }
+    })
   }
 
   // Modal editar reserva
@@ -104,35 +139,7 @@ export default function ReservasPage() {
         if (!res.ok) throw new Error(String(res.status))
         const json = await res.json()
         const list = Array.isArray(json?.reservas) ? json.reservas : []
-        const mapped: ReservaItem[] = list.map((r: any) => {
-          const origen = r.origen || 'Particular'
-          const valorTotal = Number(r.precioTotal || 0)
-          const comision = Math.round(valorTotal * 0.10) // aproximación 10%
-          const propietario = Math.max(0, valorTotal - comision)
-          const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
-          const toYMD = (d: string | Date | undefined) => {
-            if (!d) return ''
-            if (typeof d === 'string') return d.slice(0, 10)
-            const dt = new Date(d)
-            if (isNaN(dt.getTime())) return ''
-            return dt.toISOString().slice(0, 10)
-          }
-          return {
-            id: String(r._id),
-            desde: toYMD(r.fechaInicio),
-            hasta: toYMD(r.fechaFin),
-            propiedadId: r.propiedadId?._id ? String(r.propiedadId._id) : (r.propiedadId ? String(r.propiedadId) : ''),
-            propiedad: propNombre,
-            huesped: r.nombreHuesped || '',
-            telefono: r.telefonoHuesped || '',
-            valorTotal,
-            comision,
-            propietario,
-            plataforma: origen,
-            numeroHuespedes: typeof r.numeroHuespedes === 'number' ? r.numeroHuespedes : undefined,
-          }
-        })
-        setReservas(mapped)
+        setReservas(mapReservasFromApi(list))
       } catch (e) {
         setErrorMsg('No se pudieron cargar las reservas.')
         setReservas([])
@@ -190,6 +197,7 @@ export default function ReservasPage() {
   const guardarEdicion = async () => {
     if (!editForm) return
     try {
+      setEditSaving(true)
       setErrorMsg(null)
       const payload = {
         propiedadId: editForm.propiedadId,
@@ -224,41 +232,57 @@ export default function ReservasPage() {
       if (rr.ok) {
         const json = await rr.json()
         const list = Array.isArray(json?.reservas) ? json.reservas : []
-        const mapped: ReservaItem[] = list.map((r: any) => {
-          const origen = r.origen || 'Particular'
-          const valorTotal = Number(r.precioTotal || 0)
-          const comision = Math.round(valorTotal * 0.10)
-          const propietario = Math.max(0, valorTotal - comision)
-          const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
-          const toYMD = (d: string | Date | undefined) => {
-            if (!d) return ''
-            if (typeof d === 'string') return d.slice(0, 10)
-            const dt = new Date(d)
-            if (isNaN(dt.getTime())) return ''
-            return dt.toISOString().slice(0, 10)
-          }
-          return {
-            id: String(r._id),
-            desde: toYMD(r.fechaInicio),
-            hasta: toYMD(r.fechaFin),
-            propiedadId: r.propiedadId?._id ? String(r.propiedadId._id) : (r.propiedadId ? String(r.propiedadId) : ''),
-            propiedad: propNombre,
-            huesped: r.nombreHuesped || '',
-            telefono: r.telefonoHuesped || '',
-            valorTotal,
-            comision,
-            propietario,
-            plataforma: origen,
-            numeroHuespedes: typeof r.numeroHuespedes === 'number' ? r.numeroHuespedes : undefined,
-          }
-        })
-        setReservas(mapped)
+        setReservas(mapReservasFromApi(list))
       }
 
       // Notificar a otras pantallas (Inicio/Calendario) para que refetch
       emitirCambioReservas()
     } catch (e: any) {
       setErrorMsg(e?.message || 'No se pudo actualizar la reserva.')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const eliminarReserva = async () => {
+    if (!editForm) return
+    const ok = typeof window !== 'undefined'
+      ? window.confirm('¿Eliminar la reserva?\n\nEsto la marcará como cancelada.')
+      : true
+    if (!ok) return
+
+    try {
+      setEditDeleting(true)
+      setErrorMsg(null)
+      const res = await fetch(`/api/reservas/${editForm.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        let msg = `No se pudo eliminar la reserva (HTTP ${res.status}).`
+        try {
+          const j = await res.json()
+          if (j?.error) msg = j.error
+        } catch {}
+        throw new Error(msg)
+      }
+
+      setIsEditOpen(false)
+      setEditForm(null)
+
+      // Refrescar listado (en /reservas no mostramos canceladas)
+      const rr = await fetch('/api/reservas')
+      if (rr.ok) {
+        const json = await rr.json()
+        const list = Array.isArray(json?.reservas) ? json.reservas : []
+        setReservas(mapReservasFromApi(list))
+      } else {
+        // Fallback: sacar del listado actual
+        setReservas((prev) => prev.filter((r) => r.id !== editForm.id))
+      }
+
+      emitirCambioReservas()
+    } catch (e: any) {
+      setErrorMsg(e?.message || 'No se pudo eliminar la reserva.')
+    } finally {
+      setEditDeleting(false)
     }
   }
 
@@ -365,6 +389,10 @@ export default function ReservasPage() {
                     <p className="text-sm text-gray-400">Teléfono</p>
                     <p className="text-sm font-medium text-white">{reserva.telefono}</p>
                   </div>
+                </div>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-400">Huéspedes</p>
+                  <p className="text-sm font-medium text-white">{Math.max(1, Number(reserva.numeroHuespedes ?? 1))}</p>
                 </div>
               </div>
 
@@ -476,21 +504,35 @@ export default function ReservasPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-2">
+            <div className="mt-5 flex items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={() => { setIsEditOpen(false); setEditForm(null) }}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-200 border border-gray-700 hover:bg-gray-800 transition-colors"
+                onClick={eliminarReserva}
+                disabled={editSaving || editDeleting}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white border border-gray-700 hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
               >
-                Cancelar
+                <IoTrashOutline className="text-lg text-white" />
+                {editDeleting ? 'Eliminando…' : 'Eliminar'}
               </button>
-              <button
-                type="button"
-                onClick={guardarEdicion}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                Guardar
-              </button>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  disabled={editSaving || editDeleting}
+                  onClick={() => { setIsEditOpen(false); setEditForm(null) }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-200 border border-gray-700 hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={editSaving || editDeleting}
+                  onClick={guardarEdicion}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {editSaving ? 'Guardando…' : 'Guardar'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
