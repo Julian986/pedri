@@ -519,19 +519,19 @@ export default function ReservasPage() {
                 <button
                   type="button"
                   disabled={editSaving || editDeleting}
-                  onClick={() => { setIsEditOpen(false); setEditForm(null) }}
+                onClick={() => { setIsEditOpen(false); setEditForm(null) }}
                   className="px-4 py-2 rounded-lg text-sm font-medium text-gray-200 border border-gray-700 hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
                   disabled={editSaving || editDeleting}
-                  onClick={guardarEdicion}
+                onClick={guardarEdicion}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
+              >
                   {editSaving ? 'Guardando…' : 'Guardar'}
-                </button>
+              </button>
               </div>
             </div>
           </div>

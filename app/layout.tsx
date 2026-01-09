@@ -4,6 +4,7 @@ import RegisterServiceWorker from './register-sw'
 import { ModalProvider } from '@/contexts/ModalContext'
 import BottomNavWrapper from '@/components/BottomNavWrapper'
 import ViewportKeyboard from '@/components/ViewportKeyboard'
+import SideNavWrapper from '@/components/SideNavWrapper'
 
 import { Analytics } from '@vercel/analytics/react'
 
@@ -84,10 +85,16 @@ export default function RootLayout({
         <ModalProvider>
           <ViewportKeyboard />
           <RegisterServiceWorker />
-          <div className="pb-16 md:pb-0" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px))' }}>
-            {children}
+          <div className="min-h-screen bg-black md:flex">
+            <SideNavWrapper />
+            <div
+              className="flex-1 pb-16 md:pb-0"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px))' }}
+            >
+              {children}
+            </div>
           </div>
-          <BottomNavWrapper />
+          <BottomNavWrapper /> 
           <Analytics />
         </ModalProvider>
       </body>
