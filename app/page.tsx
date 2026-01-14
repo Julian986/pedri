@@ -445,7 +445,7 @@ export default function Home() {
             </button>
           </div>
         ) : getReservationsForDay(selectedDay).length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-3 pt-6 pb-20 md:pb-4">
             {getReservationsForDay(selectedDay).map((reservation) => (
               <ReservationCard
                 key={reservation.id}
