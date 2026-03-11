@@ -63,7 +63,10 @@ export default function ReservasPage() {
     return filtered.map((r: any) => {
       const origen = r.origen || 'Particular'
       const valorTotal = Number(r.precioTotal || 0)
-      const comision = Math.round(valorTotal * 0.10) // aproximación 10%
+      const pct = (r.propiedadId && typeof (r.propiedadId as any).comisionPorcentaje === 'number')
+        ? (r.propiedadId as any).comisionPorcentaje
+        : 10
+      const comision = Math.round((valorTotal * pct) / 100)
       const propietario = Math.max(0, valorTotal - comision)
       const propNombre = r.propiedadId?.nombre || r.propiedad || '—'
       const toYMD = (d: string | Date | undefined) => {

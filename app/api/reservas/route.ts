@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     const reservas = await Reserva.find(query)
-      .populate('propiedadId', 'nombre direccion ciudad')
+      .populate('propiedadId', 'nombre direccion ciudad comisionPorcentaje')
       .sort({ fechaInicio: -1 })
       .lean();
 
