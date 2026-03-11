@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import RegisterServiceWorker from './register-sw'
 import { ModalProvider } from '@/contexts/ModalContext'
@@ -7,6 +8,8 @@ import ViewportKeyboard from '@/components/ViewportKeyboard'
 import SideNavWrapper from '@/components/SideNavWrapper'
 
 import { Analytics } from '@vercel/analytics/react'
+import { GA_MEASUREMENT_ID } from '@/lib/gtag'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata: Metadata = {
   title: 'Pedri',
@@ -82,6 +85,21 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/* Google Analytics (gtag.js) */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
+        <GoogleAnalytics />
+
         <ModalProvider>
           <ViewportKeyboard />
           <RegisterServiceWorker />
