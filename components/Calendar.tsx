@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { IoChevronBack, IoChevronForward } from 'react-icons/io5'
 
 interface CalendarProps {
   reservations?: { [key: string]: { checkIn: boolean; checkOut: boolean } } // día: tipo de reservas
@@ -175,10 +176,28 @@ export default function Calendar({ reservations = {}, onDayClick, onMonthChange,
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Header con navegación del mes */}
-      <div className="flex items-center justify-center gap-2 px-4 py-4">
-        <h2 className="text-lg font-medium capitalize">{monthName}</h2>
-        <span className="text-sm text-gray-400">{year}</span>
+      {/* Header con navegación del mes: flechas solo en desktop */}
+      <div className="flex items-center justify-between gap-2 px-4 py-4">
+        <button
+          type="button"
+          onClick={previousMonth}
+          aria-label="Mes anterior"
+          className="hidden md:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+        >
+          <IoChevronBack className="text-xl" />
+        </button>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
+          <h2 className="text-lg font-medium capitalize">{monthName}</h2>
+          <span className="text-sm text-gray-400">{year}</span>
+        </div>
+        <button
+          type="button"
+          onClick={nextMonth}
+          aria-label="Mes siguiente"
+          className="hidden md:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+        >
+          <IoChevronForward className="text-xl" />
+        </button>
       </div>
 
       {/* Días de la semana */}
