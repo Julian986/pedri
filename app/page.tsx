@@ -22,10 +22,17 @@ interface Reservation {
   checkOutYear: number
   noches: number
   clientes: number
-  estado: 'Confirmada' | 'Cancelada' | 'Check-out' | 'Check-in'
+  estado: 'Confirmada' | 'Cancelada' | 'Check-out' | 'Check-in' | 'Pendiente'
   telefono: string
   total: string
   sena: string
+}
+
+function mapEstadoReservaUi(estadoBack: string): Reservation['estado'] {
+  const s = (estadoBack || '').toLowerCase()
+  if (s === 'cancelada') return 'Cancelada'
+  if (s === 'pendiente') return 'Pendiente'
+  return 'Confirmada'
 }
 
 export default function Home() {
@@ -114,7 +121,7 @@ export default function Home() {
           const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
           const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
           const estadoBack = (r.estado || '').toLowerCase()
-          const estado: Reservation['estado'] = estadoBack === 'cancelada' ? 'Cancelada' : 'Confirmada'
+          const estado = mapEstadoReservaUi(estadoBack)
           return {
             id: String(r._id),
             propiedad: r.propiedadId?.nombre || '',
@@ -388,7 +395,7 @@ export default function Home() {
           const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
           const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
           const estadoBack = (r.estado || '').toLowerCase()
-          const estado: Reservation['estado'] = estadoBack === 'cancelada' ? 'Cancelada' : 'Confirmada'
+          const estado = mapEstadoReservaUi(estadoBack)
           return {
             id: String(r._id),
             propiedad: r.propiedadId?.nombre || '',

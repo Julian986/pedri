@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { useModal } from '@/contexts/ModalContext'
+import { usePathname } from 'next/navigation'
 import SideNav from './SideNav'
+
+const PUBLIC_PATHS = ['/reservar', '/explorar', '/detalle', '/finalizar']
 
 export default function SideNavWrapper() {
   const { isModalOpen } = useModal()
   const [collapsed, setCollapsed] = useState(false)
+  const pathname = usePathname()
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
   useEffect(() => {
     try {
@@ -24,6 +29,8 @@ export default function SideNavWrapper() {
       return next
     })
   }
+
+  if (isPublic) return null
 
   return <SideNav disabled={isModalOpen} collapsed={collapsed} onToggleCollapsed={toggle} />
 }

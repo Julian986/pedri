@@ -9,7 +9,7 @@ export interface IReserva extends Document {
   fechaFin: Date;
   numeroHuespedes: number;
   precioTotal: number;
-  origen: 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Particular' | 'Otro';
+  origen: 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Particular' | 'Otro' | 'Web';
   estado: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada';
   notas?: string;
   createdAt: Date;
@@ -60,7 +60,7 @@ const ReservaSchema = new Schema<IReserva>(
     },
     origen: {
       type: String,
-      enum: ['Airbnb', 'Booking', 'Facebook', 'Mercado Libre', 'Recomendado', 'Particular', 'Otro'],
+      enum: ['Airbnb', 'Booking', 'Facebook', 'Mercado Libre', 'Recomendado', 'Particular', 'Otro', 'Web'],
       required: [true, 'El origen es requerido'],
     },
     estado: {

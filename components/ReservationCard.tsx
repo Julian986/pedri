@@ -13,7 +13,7 @@ export interface Reservation {
   checkOutDay: number
   noches: number
   clientes: number
-  estado: 'Confirmada' | 'Cancelada' | 'Check-out' | 'Check-in'
+  estado: 'Confirmada' | 'Cancelada' | 'Check-out' | 'Check-in' | 'Pendiente'
   telefono: string
   total?: string
   sena?: string
@@ -60,6 +60,7 @@ export default function ReservationCard({
   }
 
   const isCancelled = reservation.estado === 'Cancelada'
+  const isPendiente = reservation.estado === 'Pendiente'
 
   const handleCancel = () => {
     if (onCancelReservation) {
@@ -78,7 +79,7 @@ export default function ReservationCard({
       {/* Contenido de la tarjeta con opacidad cuando está cancelada */}
       <div className={`relative ${isCancelled ? 'opacity-50' : ''}`}>
       {/* Nombre del alojamiento con punto de color */}
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="mb-1.5 flex w-full min-w-0 items-center gap-2">
         {/* Indicador: Gris para salida, Azul para entrada, Dos puntos para estancia */}
         {!isOngoing && (
           <div 
@@ -93,7 +94,12 @@ export default function ReservationCard({
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
           </div>
         )}
-        <h3 className="text-white font-semibold text-base">{reservation.propiedad}</h3>
+        <h3 className="min-w-0 flex-1 truncate text-base font-semibold text-white">{reservation.propiedad}</h3>
+        {isPendiente ? (
+          <span className="ml-auto shrink-0 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300 ring-1 ring-amber-500/40">
+            Web · pendiente
+          </span>
+        ) : null}
       </div>
 
       {/* Nombre del huésped con botón de chat */}

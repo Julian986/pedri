@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Available Properties - LUXE stays</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#005236",
+                    "error-container": "#93000a",
+                    "surface": "#131313",
+                    "secondary-fixed": "#6ffbbe",
+                    "primary-container": "#2d68ff",
+                    "secondary-container": "#00a572",
+                    "on-tertiary": "#402d00",
+                    "secondary": "#4edea3",
+                    "on-surface": "#e5e2e1",
+                    "surface-variant": "#353534",
+                    "tertiary-fixed": "#ffdf9f",
+                    "primary-fixed": "#dce1ff",
+                    "on-tertiary-fixed-variant": "#5c4300",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-container-highest": "#353534",
+                    "surface-tint": "#b5c4ff",
+                    "on-primary-fixed": "#00164e",
+                    "outline-variant": "#434655",
+                    "on-secondary-container": "#00311f",
+                    "on-secondary": "#003824",
+                    "error": "#ffb4ab",
+                    "surface-container": "#201f1f",
+                    "surface-dim": "#131313",
+                    "on-tertiary-container": "#fffdff",
+                    "surface-container-high": "#2a2a2a",
+                    "inverse-on-surface": "#313030",
+                    "primary-fixed-dim": "#b5c4ff",
+                    "tertiary": "#f9bd22",
+                    "on-error": "#690005",
+                    "outline": "#8d90a1",
+                    "on-primary-fixed-variant": "#003cae",
+                    "on-primary": "#00287c",
+                    "on-secondary-fixed": "#002113",
+                    "background": "#131313",
+                    "tertiary-container": "#956f00",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#f9bd22",
+                    "on-background": "#e5e2e1",
+                    "on-surface-variant": "#c3c5d8",
+                    "secondary-fixed-dim": "#4edea3",
+                    "on-tertiary-fixed": "#261a00",
+                    "inverse-primary": "#0050e3",
+                    "surface-container-lowest": "#0e0e0e",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-bright": "#3a3939",
+                    "on-primary-container": "#fffcff",
+                    "primary": "#b5c4ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "base": "4px",
+                    "xl": "64px",
+                    "md": "24px",
+                    "xs": "8px",
+                    "lg": "40px",
+                    "gutter": "16px",
+                    "margin-page": "32px"
+            },
+            "fontFamily": {
+                    "display-lg": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "numeric-data": [
+                            "Inter"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "display-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-md": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "0em",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "numeric-data": [
+                            "15px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0em",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant fixed w-full top-0 z-50">
+<div class="flex justify-between items-center w-full px-md h-xl max-w-7xl mx-auto">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="domain">domain</span>
+<span class="font-display-lg text-display-lg font-bold text-primary tracking-tighter">LUXE stays</span>
+</div>
+<button class="font-headline-md text-headline-md text-on-surface-variant hover:text-primary transition-all duration-200 active:scale-95">
+                Sign In
+            </button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow max-w-7xl mx-auto px-md pt-[96px] pb-lg w-full">
+<!-- Header & Filters -->
+<section class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-md mb-lg">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-xs">Available Properties</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Showing 4 exclusive listings matching your criteria.</p>
+</div>
+<div class="flex flex-wrap gap-sm">
+<button class="flex items-center gap-xs px-4 py-2 rounded-full border border-outline-variant bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="payments">payments</span>
+                    Price
+                    <span class="material-symbols-outlined text-[18px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+<button class="flex items-center gap-xs px-4 py-2 rounded-full border border-outline-variant bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="home">home</span>
+                    Type
+                    <span class="material-symbols-outlined text-[18px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+<button class="flex items-center gap-xs px-4 py-2 rounded-full border border-outline-variant bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="room_service">room_service</span>
+                    Amenities
+                    <span class="material-symbols-outlined text-[18px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+<button class="flex items-center gap-xs px-4 py-2 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors font-body-sm text-body-sm ml-auto lg:ml-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span>
+                    More Filters
+                </button>
+</div>
+</section>
+<!-- Properties Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
+<!-- Featured Property Card (Spans 2 columns) -->
+<article class="md:col-span-2 bg-surface border border-outline-variant rounded-xl overflow-hidden group relative flex flex-col md:flex-row">
+<!-- Image Section -->
+<div class="w-full md:w-3/5 h-64 md:h-auto relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A high-end, futuristic penthouse living room viewed at night through expansive floor-to-ceiling windows. The interior is minimal, featuring low-profile black leather furniture on a polished dark concrete floor. Subtle, indirect electric blue LED strip lighting highlights the architectural lines of the ceiling and baseboards. The city skyline outside is slightly out of focus, creating a deep bokeh effect with cool cyan and deep purple city lights. The overall mood is luxurious, secluded, and hyper-modern, fitting a dark-mode luxury property management platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqHfkyEAOXp6FXjhMjXhVQFubCBR43GzHbGATQbOR3Ho0iv-Zoe3b_9M_RmxO2rFUwzP_2j96Z6efkFlFyySpEo1Yc_igXCzIdvzCuYI6DFYFXarpM1rPJvrpDK54hcRMF4lXW0GZFIx2xVEFUFGJ7o4fSbI-oGkA_Wixh7N69Ec-iNyDRCKTEbLrN7oepm0lG2j0ijYW4ra4HBss6FzDMoR4nICUTzH926gosui8IR8RYVvpW1gO5XwNlzQdOV6r-MQnMfUTs8kkI"/>
+<div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+<!-- Rating Badge -->
+<div class="absolute top-sm left-sm bg-surface/80 backdrop-blur-md border border-outline-variant px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-numeric-data text-numeric-data text-on-surface">4.98</span>
+</div>
+<!-- Status Chip -->
+<div class="absolute bottom-sm left-sm bg-secondary-container/10 border border-secondary-container/20 px-2 py-1 rounded text-secondary font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-sm">
+                        Superhost
+                    </div>
+</div>
+<!-- Content Section -->
+<div class="w-full md:w-2/5 p-lg flex flex-col justify-between bg-surface relative z-10">
+<div>
+<div class="flex justify-between items-start mb-xs">
+<h2 class="font-headline-md text-headline-md text-on-surface pr-4">The Obsidian Penthouse</h2>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite_border">favorite_border</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+                            Downtown Metropolis
+                        </p>
+<div class="flex gap-md mb-lg border-y border-outline-variant/30 py-sm">
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="bed">bed</span> 4 Beds
+                            </div>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="shower">shower</span> 3.5 Baths
+                            </div>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="square_foot">square_foot</span> 4,200 sqft
+                            </div>
+</div>
+</div>
+<div class="flex flex-col gap-sm mt-auto">
+<div class="flex items-baseline gap-1">
+<span class="font-numeric-data text-[28px] font-bold text-on-surface tracking-tight">$1,250</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ night</span>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-lg font-body-md text-body-md font-medium hover:bg-primary transition-all duration-300 shadow-[0_4px_20px_rgba(45,104,255,0.0)] hover:shadow-[0_4px_20px_rgba(45,104,255,0.3)] flex justify-center items-center gap-2">
+                            View details
+                            <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Standard Property Card 1 -->
+<article class="bg-surface border border-outline-variant rounded-xl overflow-hidden group relative flex flex-col">
+<div class="w-full h-56 relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A sleek, minimalist luxury bedroom illuminated by dramatic, high-contrast moonlit ambiance. The center features a floating platform bed with crisp, dark charcoal linens. The walls are finished in matte black acoustic paneling with a single, sharp geometric sconce emitting a cool, electric blue glow. A large window reveals a dark, moody forest silhouette. The composition emphasizes clean, mathematical lines and deep shadows, conveying a sense of authoritative calm and premium isolation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBM8UdKTvKy6ckPJy5uXH-425YY2rn9T0DfIf9DKQnkEVMfQJWqjJyGtbUspWYuaFNa1wDLSbGg_ZA2MwtB3T6MVeLvaXvWrB_FVQsC4MsJtmYjKWCOp421jCPPFgc3PhcLgwsBWmJz3pTXQdfh8BmE_tKVNP_wLTzYFKjksX6ip94Rn8-EjgPJc_slwRE6a7Rt_7YxRcyvUmZh9i7UjU-fGqZKdGvSt6WZ2Wr4ezzJRPnHqi1aKxd8isgo3KsOEJCwVstuOwpBtot"/>
+<div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+<div class="absolute top-sm right-sm bg-surface/80 backdrop-blur-md border border-outline-variant px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-numeric-data text-numeric-data text-on-surface">4.85</span>
+</div>
+</div>
+<div class="p-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-xs">
+<h3 class="font-headline-md text-headline-md text-on-surface truncate pr-2">Neon Heights Loft</h3>
+<button class="text-outline hover:text-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="favorite_border">favorite_border</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                        Cyber District
+                    </p>
+<div class="flex gap-sm mb-md pb-md border-b border-outline-variant/30">
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="bed">bed</span> 2 Beds
+                        </div>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="shower">shower</span> 2 Baths
+                        </div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-baseline gap-1">
+<span class="font-numeric-data text-[22px] font-bold text-on-surface tracking-tight">$450</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ night</span>
+</div>
+<button class="border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-body-sm text-body-sm font-medium hover:bg-surface-container transition-colors">
+                            View details
+                        </button>
+</div>
+</div>
+</article>
+<!-- Standard Property Card 2 -->
+<article class="bg-surface border border-outline-variant rounded-xl overflow-hidden group relative flex flex-col">
+<div class="w-full h-56 relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="An ultra-modern architectural villa exterior at twilight, focusing on sharp angles and dark materials. The facade is clad in charred timber and matte black steel. An infinity pool in the foreground acts as a perfect, dark mirror, subtly reflecting a faint electric blue underwater light. The lighting is low-key, utilizing shadows to emphasize form over detail. The scene is immaculate, void of clutter, and exudes a precise, high-end minimalist aesthetic perfect for an exclusive digital platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWDUFJCN7uMCdCCxb4j5HAl1tp1RsJwL_12-WBEtOxQpJVI3KZSBHDyD-sARuiP5sbmMesYuyBsPrDPT8SspVvmNeClSnt4FQpmr5RDQJ0-3iFPT0ixRVtz5mEcrl9Z7T8sDdx2Eb1Wz3gg1oUsAW6ayx4g58FB-j52wZoBsNqNTkR7DPHZeIsjWF5RtWl-B0eHuFkoVHUVCN1W8dVHZi2pQmDli-5SIgddDCH_XIdgWFtM7-uBD-b1Qluo8gbl5x1_Lq3oULohFBl"/>
+<div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+<div class="absolute top-sm right-sm bg-surface/80 backdrop-blur-md border border-outline-variant px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-numeric-data text-numeric-data text-on-surface">4.92</span>
+</div>
+</div>
+<div class="p-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-xs">
+<h3 class="font-headline-md text-headline-md text-on-surface truncate pr-2">Zenith brutalist Villa</h3>
+<button class="text-outline hover:text-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="favorite_border">favorite_border</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                        Northridge Peaks
+                    </p>
+<div class="flex gap-sm mb-md pb-md border-b border-outline-variant/30">
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="bed">bed</span> 5 Beds
+                        </div>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="shower">shower</span> 4 Baths
+                        </div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-baseline gap-1">
+<span class="font-numeric-data text-[22px] font-bold text-on-surface tracking-tight">$1,800</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ night</span>
+</div>
+<button class="border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-body-sm text-body-sm font-medium hover:bg-surface-container transition-colors">
+                            View details
+                        </button>
+</div>
+</div>
+</article>
+<!-- Standard Property Card 3 -->
+<article class="bg-surface border border-outline-variant rounded-xl overflow-hidden group relative flex flex-col">
+<div class="w-full h-56 relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A minimalist high-rise balcony at night, featuring a dark glass railing and matte slate tiles. A single, brutalist-style black concrete lounge chair sits in the corner. The lighting is sparse, primarily coming from the faint ambient glow of the cityscape below and a thin line of electric blue accent light integrated into the decking. The mood is calm, controlled, and deeply atmospheric, aligning with a premium, ocular-strain-free dark mode design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVuow9Hwp56p1Y_ysj55kVFtPRbreusTxdhI2cX4V9mnTZFB8KxCN78FvaL5v0SS-T2onBj84Hc5AfwPCSR2cD6wzvqJuIxw9AKgupe4PwCoooYoDtZoyaWcL-Z0IZAG6qFX8I34uqixkXaN-e7WxXJj_db6xnmgmxp9aoG7E4bJ02reV7zX40ZDnz1MJ7Pa5fQUoKH-7e0Sw6Ln4cRPWzj9qapACem1OiADd8UNdBxxPF2UW5LjgLLdH67uiFoIxaVBBXN6ELjZhy"/>
+<div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+<div class="absolute top-sm right-sm bg-surface/80 backdrop-blur-md border border-outline-variant px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-numeric-data text-numeric-data text-on-surface">4.75</span>
+</div>
+</div>
+<div class="p-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-xs">
+<h3 class="font-headline-md text-headline-md text-on-surface truncate pr-2">The Apex Studio</h3>
+<button class="text-outline hover:text-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="favorite_border">favorite_border</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                        Financial Core
+                    </p>
+<div class="flex gap-sm mb-md pb-md border-b border-outline-variant/30">
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="bed">bed</span> 1 Bed
+                        </div>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="shower">shower</span> 1 Bath
+                        </div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-baseline gap-1">
+<span class="font-numeric-data text-[22px] font-bold text-on-surface tracking-tight">$280</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ night</span>
+</div>
+<button class="border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-body-sm text-body-sm font-medium hover:bg-surface-container transition-colors">
+                            View details
+                        </button>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center gap-md px-md py-lg max-w-7xl mx-auto w-full">
+<span class="font-body-sm text-body-sm text-on-surface-variant">© 2024 LUXE Property Management. All rights reserved.</span>
+<div class="flex gap-md font-body-sm text-body-sm">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors opacity-80 hover:opacity-100" href="#">Browse</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors opacity-80 hover:opacity-100" href="#">How it works</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors opacity-80 hover:opacity-100" href="#">Support</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors opacity-80 hover:opacity-100" href="#">Privacy</a>
+</div>
+</div>
+</footer>
+</body></html>

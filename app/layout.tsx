@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { headers } from 'next/headers'
 import './globals.css'
 import RegisterServiceWorker from './register-sw'
 import { ModalProvider } from '@/contexts/ModalContext'
@@ -10,6 +11,7 @@ import SideNavWrapper from '@/components/SideNavWrapper'
 import { Analytics } from '@vercel/analytics/react'
 import { GA_MEASUREMENT_ID } from '@/lib/gtag'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import { getRequestHostname, isPublicBookingHostname } from '@/lib/public-booking-host'
 
 export const metadata: Metadata = {
   title: 'Pedri',
@@ -55,11 +57,33 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const headersList = await headers()
+  const publicBooking = isPublicBookingHostname(getRequestHostname(headersList))
+
+  const privateChrome = (
+    <>
+      <ViewportKeyboard />
+      <RegisterServiceWorker />
+      <div className="min-h-screen bg-black md:flex">
+        <SideNavWrapper />
+        <div
+          className="flex-1 pb-16 md:pb-0"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px))' }}
+        >
+          {children}
+        </div>
+      </div>
+      <BottomNavWrapper />
+    </>
+  )
+
+  const publicChrome = <div className="min-h-screen bg-zinc-950 antialiased">{children}</div>
+
   return (
     <html lang="es">
       <head>
@@ -101,18 +125,7 @@ export default function RootLayout({
         <GoogleAnalytics />
 
         <ModalProvider>
-          <ViewportKeyboard />
-          <RegisterServiceWorker />
-          <div className="min-h-screen bg-black md:flex">
-            <SideNavWrapper />
-            <div
-              className="flex-1 pb-16 md:pb-0"
-              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px))' }}
-            >
-              {children}
-            </div>
-          </div>
-          <BottomNavWrapper /> 
+          {publicBooking ? publicChrome : privateChrome}
           <Analytics />
         </ModalProvider>
       </body>
