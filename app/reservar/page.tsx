@@ -11,10 +11,8 @@ export default function ReservarPage() {
               </span>
               <span className="text-[32px] font-bold leading-[40px] tracking-tight text-[#b5c4ff]">Pedri</span>
             </div>
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/reservar" className="font-semibold text-[#b5c4ff]">Inicio</Link>
-            <Link href="/explorar" className="text-[#c3c5d8] transition hover:text-[#b5c4ff]">Explorar</Link>
-            <button className="flex items-center gap-1 text-[16px] leading-6 text-[#c3c5d8] transition hover:text-[#b5c4ff] active:scale-95">
+          <nav className="flex items-center text-sm">
+            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
               Ingresar
             </button>
           </nav>
@@ -257,7 +255,7 @@ export default function ReservarPage() {
               </a>
             </nav>
             <div className="text-center text-[14px] leading-5 text-[#c3c5d8] md:text-right">
-              © 2024 Pedri. All rights reserved.
+              © 2026 Pedri. All rights reserved.
             </div>
           </div>
         </footer>

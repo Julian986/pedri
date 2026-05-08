@@ -47,10 +47,8 @@ export default async function DetallePage({
             </span>
             <span className="text-[32px] font-bold tracking-tight">Pedri</span>
           </div>
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/reservar" className="text-[#c3c5d8] transition hover:text-[#b5c4ff]">Inicio</Link>
-            <Link href="/explorar" className="font-semibold text-[#b5c4ff]">Explorar</Link>
-            <button className="text-[16px] text-[#c3c5d8] transition hover:text-[#b5c4ff]">Ingresar</button>
+          <nav className="flex items-center text-sm">
+            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">Ingresar</button>
           </nav>
         </div>
       </header>
@@ -275,7 +273,7 @@ export default async function DetallePage({
       <footer className="w-full border-t border-[#434655] bg-[#0e0e0e] pb-24 lg:pb-0">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-6 px-6 py-10 md:flex-row">
           <span className="text-[12px] font-semibold uppercase tracking-widest text-[#b5c4ff] opacity-80">
-            © 2024 Pedri. Todos los derechos reservados.
+            © 2026 Pedri. Todos los derechos reservados.
           </span>
           <div className="flex gap-6 text-[14px] text-[#c3c5d8]">
             <a className="opacity-80 transition hover:text-[#e5e2e1] hover:opacity-100" href="#">Explorar</a>

@@ -10,10 +10,8 @@ export default function ExplorarPage() {
             <span className="material-symbols-outlined text-2xl text-[#b5c4ff]">domain</span>
             <span className="text-[32px] font-bold leading-[40px] tracking-tight text-[#b5c4ff]">Pedri</span>
           </div>
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/reservar" className="text-[#c3c5d8] transition hover:text-[#b5c4ff]">Inicio</Link>
-            <Link href="/explorar" className="font-semibold text-[#b5c4ff]">Explorar</Link>
-            <button className="text-[20px] font-semibold leading-7 text-[#c3c5d8] transition duration-200 hover:text-[#b5c4ff] active:scale-95">
+          <nav className="flex items-center text-sm">
+            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
               Ingresar
             </button>
           </nav>
@@ -256,7 +254,7 @@ export default function ExplorarPage() {
 
       <footer className="mt-auto border-t border-[#434655] bg-[#0e0e0e]">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-6 px-6 py-10 md:flex-row">
-          <span className="text-[14px] leading-5 text-[#c3c5d8]">© 2024 Pedri. All rights reserved.</span>
+          <span className="text-[14px] leading-5 text-[#c3c5d8]">© 2026 Pedri. All rights reserved.</span>
           <div className="flex gap-6 text-[14px] leading-5">
             <a className="text-[#c3c5d8] opacity-80 transition hover:text-[#e5e2e1] hover:opacity-100" href="#">
               Explorar
