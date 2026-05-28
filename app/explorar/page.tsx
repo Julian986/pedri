@@ -1,5 +1,12 @@
 import Link from 'next/link';
 import PublicBackLink from '@/components/PublicBackLink'
+import TrackedLink from '@/components/TrackedLink'
+import TrackedButton from '@/components/TrackedButton'
+
+export const metadata = {
+  title: 'Explorar propiedades',
+  description: 'Explorá alojamientos disponibles y revisá sus detalles.',
+}
 
 export default function ExplorarPage() {
   return (
@@ -11,9 +18,13 @@ export default function ExplorarPage() {
             <span className="text-[32px] font-bold leading-[40px] tracking-tight text-[#b5c4ff]">Pedri</span>
           </div>
           <nav className="flex items-center text-sm">
-            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
+            <TrackedButton
+              eventName="ingresar_click"
+              location="explorar_header"
+              className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95"
+            >
               Ingresar
-            </button>
+            </TrackedButton>
           </nav>
         </div>
       </header>
@@ -32,25 +43,25 @@ export default function ExplorarPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button className="flex items-center gap-2 rounded-full border border-[#434655] bg-[#201f1f] px-4 py-2 text-[14px] leading-5 text-[#e5e2e1] transition-colors hover:bg-[#2a2a2a]">
+            <TrackedButton eventName="filtro_click" location="explorar_filtro_precio" className="flex items-center gap-2 rounded-full border border-[#434655] bg-[#201f1f] px-4 py-2 text-[14px] leading-5 text-[#e5e2e1] transition-colors hover:bg-[#2a2a2a]">
               <span className="material-symbols-outlined text-[18px]">payments</span>
               Precio
               <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
-            </button>
-            <button className="flex items-center gap-2 rounded-full border border-[#434655] bg-[#201f1f] px-4 py-2 text-[14px] leading-5 text-[#e5e2e1] transition-colors hover:bg-[#2a2a2a]">
+            </TrackedButton>
+            <TrackedButton eventName="filtro_click" location="explorar_filtro_tipo" className="flex items-center gap-2 rounded-full border border-[#434655] bg-[#201f1f] px-4 py-2 text-[14px] leading-5 text-[#e5e2e1] transition-colors hover:bg-[#2a2a2a]">
               <span className="material-symbols-outlined text-[18px]">home</span>
               Tipo
               <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
-            </button>
-            <button className="flex items-center gap-2 rounded-full border border-[#434655] bg-[#201f1f] px-4 py-2 text-[14px] leading-5 text-[#e5e2e1] transition-colors hover:bg-[#2a2a2a]">
+            </TrackedButton>
+            <TrackedButton eventName="filtro_click" location="explorar_filtro_comodidades" className="flex items-center gap-2 rounded-full border border-[#434655] bg-[#201f1f] px-4 py-2 text-[14px] leading-5 text-[#e5e2e1] transition-colors hover:bg-[#2a2a2a]">
               <span className="material-symbols-outlined text-[18px]">room_service</span>
               Comodidades
               <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
-            </button>
-            <button className="ml-auto flex items-center gap-2 rounded-full border border-[#b5c4ff] px-4 py-2 text-[14px] leading-5 text-[#b5c4ff] transition-colors hover:bg-[#b5c4ff]/10 lg:ml-0">
+            </TrackedButton>
+            <TrackedButton eventName="filtro_click" location="explorar_mas_filtros" className="ml-auto flex items-center gap-2 rounded-full border border-[#b5c4ff] px-4 py-2 text-[14px] leading-5 text-[#b5c4ff] transition-colors hover:bg-[#b5c4ff]/10 lg:ml-0">
               <span className="material-symbols-outlined text-[18px]">tune</span>
               Más filtros
-            </button>
+            </TrackedButton>
           </div>
         </section>
 
@@ -78,9 +89,9 @@ export default function ExplorarPage() {
               <div>
                 <div className="mb-2 flex items-start justify-between">
                   <h2 className="pr-4 text-[20px] font-semibold leading-7 text-[#e5e2e1]">Yeso</h2>
-                  <button className="text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
+                  <TrackedButton eventName="guardar_propiedad_click" location="explorar_card_yeso" className="text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
                     <span className="material-symbols-outlined">favorite_border</span>
-                  </button>
+                  </TrackedButton>
                 </div>
                 <p className="mb-6 flex items-center gap-1 text-[16px] leading-6 text-[#c3c5d8]">
                   <span className="material-symbols-outlined text-[16px]">location_on</span>
@@ -104,10 +115,10 @@ export default function ExplorarPage() {
                   <span className="text-[28px] font-bold tracking-tight text-[#e5e2e1]">ARS 620.000</span>
                   <span className="text-[14px] leading-5 text-[#c3c5d8]">/ noche</span>
                 </div>
-                <Link href="/detalle?propiedad=yeso" className="flex items-center justify-center gap-2 rounded-lg bg-[#2d68ff] py-3 text-[16px] font-medium leading-6 text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.0)] transition-all duration-300 hover:bg-[#b5c4ff] hover:text-[#00164e] hover:shadow-[0_4px_20px_rgba(45,104,255,0.3)]">
+                <TrackedLink eventName="ver_detalle_click" location="explorar_card_yeso" href="/detalle?propiedad=yeso" className="flex items-center justify-center gap-2 rounded-lg bg-[#2d68ff] py-3 text-[16px] font-medium leading-6 text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.0)] transition-all duration-300 hover:bg-[#b5c4ff] hover:text-[#00164e] hover:shadow-[0_4px_20px_rgba(45,104,255,0.3)]">
                   Ver detalle
                   <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                </Link>
+                </TrackedLink>
               </div>
             </div>
           </article>
@@ -130,9 +141,9 @@ export default function ExplorarPage() {
             <div className="flex flex-grow flex-col p-6">
               <div className="mb-2 flex items-start justify-between">
                 <h3 className="truncate pr-2 text-[20px] font-semibold leading-7 text-[#e5e2e1]">Graciana</h3>
-                <button className="shrink-0 text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
+                <TrackedButton eventName="guardar_propiedad_click" location="explorar_card_graciana" className="shrink-0 text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
                   <span className="material-symbols-outlined">favorite_border</span>
-                </button>
+                </TrackedButton>
               </div>
               <p className="mb-6 flex items-center gap-1 text-[14px] leading-5 text-[#c3c5d8]">
                 <span className="material-symbols-outlined text-[14px]">location_on</span>
@@ -151,9 +162,9 @@ export default function ExplorarPage() {
                   <span className="text-[22px] font-bold tracking-tight text-[#e5e2e1]">ARS 862.785</span>
                   <span className="text-[14px] leading-5 text-[#c3c5d8]">/ noche</span>
                 </div>
-                <Link href="/detalle?propiedad=graciana" className="rounded-lg border border-[#434655] px-4 py-2 text-[14px] font-medium leading-5 text-[#e5e2e1] transition-colors hover:bg-[#201f1f]">
+                <TrackedLink eventName="ver_detalle_click" location="explorar_card_graciana" href="/detalle?propiedad=graciana" className="rounded-lg border border-[#434655] px-4 py-2 text-[14px] font-medium leading-5 text-[#e5e2e1] transition-colors hover:bg-[#201f1f]">
                   Ver detalle
-                </Link>
+                </TrackedLink>
               </div>
             </div>
           </article>
@@ -176,9 +187,9 @@ export default function ExplorarPage() {
             <div className="flex flex-grow flex-col p-6">
               <div className="mb-2 flex items-start justify-between">
                 <h3 className="truncate pr-2 text-[20px] font-semibold leading-7 text-[#e5e2e1]">Chiquito</h3>
-                <button className="shrink-0 text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
+                <TrackedButton eventName="guardar_propiedad_click" location="explorar_card_chiquito" className="shrink-0 text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
                   <span className="material-symbols-outlined">favorite_border</span>
-                </button>
+                </TrackedButton>
               </div>
               <p className="mb-6 flex items-center gap-1 text-[14px] leading-5 text-[#c3c5d8]">
                 <span className="material-symbols-outlined text-[14px]">location_on</span>
@@ -197,9 +208,9 @@ export default function ExplorarPage() {
                   <span className="text-[22px] font-bold tracking-tight text-[#e5e2e1]">ARS 542.000</span>
                   <span className="text-[14px] leading-5 text-[#c3c5d8]">/ noche</span>
                 </div>
-                <Link href="/detalle?propiedad=chiquito" className="rounded-lg border border-[#434655] px-4 py-2 text-[14px] font-medium leading-5 text-[#e5e2e1] transition-colors hover:bg-[#201f1f]">
+                <TrackedLink eventName="ver_detalle_click" location="explorar_card_chiquito" href="/detalle?propiedad=chiquito" className="rounded-lg border border-[#434655] px-4 py-2 text-[14px] font-medium leading-5 text-[#e5e2e1] transition-colors hover:bg-[#201f1f]">
                   Ver detalle
-                </Link>
+                </TrackedLink>
               </div>
             </div>
           </article>
@@ -222,9 +233,9 @@ export default function ExplorarPage() {
             <div className="flex flex-grow flex-col p-6">
               <div className="mb-2 flex items-start justify-between">
                 <h3 className="truncate pr-2 text-[20px] font-semibold leading-7 text-[#e5e2e1]">Maricarmen</h3>
-                <button className="shrink-0 text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
+                <TrackedButton eventName="guardar_propiedad_click" location="explorar_card_maricarmen" className="shrink-0 text-[#8d90a1] transition-colors hover:text-[#b5c4ff]">
                   <span className="material-symbols-outlined">favorite_border</span>
-                </button>
+                </TrackedButton>
               </div>
               <p className="mb-6 flex items-center gap-1 text-[14px] leading-5 text-[#c3c5d8]">
                 <span className="material-symbols-outlined text-[14px]">location_on</span>
@@ -243,9 +254,9 @@ export default function ExplorarPage() {
                   <span className="text-[22px] font-bold tracking-tight text-[#e5e2e1]">ARS 484.454</span>
                   <span className="text-[14px] leading-5 text-[#c3c5d8]">/ noche</span>
                 </div>
-                <Link href="/detalle?propiedad=maricarmen" className="rounded-lg border border-[#434655] px-4 py-2 text-[14px] font-medium leading-5 text-[#e5e2e1] transition-colors hover:bg-[#201f1f]">
+                <TrackedLink eventName="ver_detalle_click" location="explorar_card_maricarmen" href="/detalle?propiedad=maricarmen" className="rounded-lg border border-[#434655] px-4 py-2 text-[14px] font-medium leading-5 text-[#e5e2e1] transition-colors hover:bg-[#201f1f]">
                   Ver detalle
-                </Link>
+                </TrackedLink>
               </div>
             </div>
           </article>

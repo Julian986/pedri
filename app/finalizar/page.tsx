@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import PublicBackLink from '@/components/PublicBackLink'
+import TrackedButton from '@/components/TrackedButton'
+
+export const metadata = {
+  title: 'Finalizar reserva',
+  description: 'Completá tus datos y confirmá el pago de tu estadía.',
+}
 
 export default function FinalizarPage() {
   return (
@@ -11,9 +17,9 @@ export default function FinalizarPage() {
             <span className="text-[32px] font-bold tracking-tight text-[#b5c4ff]">Pedri</span>
           </div>
           <nav className="flex items-center text-sm">
-            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
+            <TrackedButton eventName="ingresar_click" location="finalizar_header" className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
               <span>Ingresar</span>
-            </button>
+            </TrackedButton>
           </nav>
         </div>
       </header>
@@ -144,10 +150,10 @@ export default function FinalizarPage() {
               <span className="text-[32px] font-bold tracking-tight text-[#e5e2e1]">ARS 620.000</span>
             </div>
 
-            <button className="flex w-full items-center justify-center gap-1 rounded bg-[#2d68ff] py-[14px] text-[20px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
+            <TrackedButton eventName="confirmar_pagar_click" location="finalizar_cta" className="flex w-full items-center justify-center gap-1 rounded bg-[#2d68ff] py-[14px] text-[20px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
               <span className="material-symbols-outlined" style={{ fontSize: 20 }}>lock</span>
               Confirmar y pagar
-            </button>
+            </TrackedButton>
             <p className="mt-1 text-center text-[14px] text-[#8d90a1]">No se realizará ningún cobro hasta confirmar.</p>
           </div>
         </div>

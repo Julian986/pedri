@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import PublicBackLink from '@/components/PublicBackLink'
+import TrackedLink from '@/components/TrackedLink'
+import TrackedButton from '@/components/TrackedButton'
 
 type DetalleSearchParams = {
   propiedad?: string
@@ -28,6 +30,11 @@ const PROPIEDADES = {
   },
 } as const
 
+export const metadata = {
+  title: 'Detalle de propiedad',
+  description: 'Revisá fotos, comodidades y precios antes de reservar.',
+}
+
 export default async function DetallePage({
   searchParams,
 }: {
@@ -48,7 +55,7 @@ export default async function DetallePage({
             <span className="text-[32px] font-bold tracking-tight">Pedri</span>
           </div>
           <nav className="flex items-center text-sm">
-            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">Ingresar</button>
+            <TrackedButton eventName="ingresar_click" location="detalle_header" className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">Ingresar</TrackedButton>
           </nav>
         </div>
       </header>
@@ -77,12 +84,12 @@ export default async function DetallePage({
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="flex items-center gap-1 rounded border border-[#434655] px-3 py-2 text-[14px] hover:bg-[#2a2a2a]">
+            <TrackedButton eventName="compartir_click" location="detalle_header_actions" className="flex items-center gap-1 rounded border border-[#434655] px-3 py-2 text-[14px] hover:bg-[#2a2a2a]">
               <span className="material-symbols-outlined text-sm">share</span> Compartir
-            </button>
-            <button className="flex items-center gap-1 rounded border border-[#434655] px-3 py-2 text-[14px] hover:bg-[#2a2a2a]">
+            </TrackedButton>
+            <TrackedButton eventName="guardar_propiedad_click" location="detalle_header_actions" className="flex items-center gap-1 rounded border border-[#434655] px-3 py-2 text-[14px] hover:bg-[#2a2a2a]">
               <span className="material-symbols-outlined text-sm">favorite_border</span> Guardar
-            </button>
+            </TrackedButton>
           </div>
         </div>
 
@@ -126,9 +133,9 @@ export default async function DetallePage({
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsKMtlUOnYk5Mt_dbrOq3hqjfCeT0WcxwBH5r9S299HEwBsNSiO6nHfCMt6FFv8M-qJY0D_zy5AyhOhyaSD4xeMJpheqLuPwISmFkGXPc6OEXn6L67bg5KJhPuD2Rkmm1lMtiBBsXA1lpQOUU3w2Cd816pmY-LCushLi6rqgXX9D4H4aPtMugJvrIReoIscUSHi2Qcf5orE2yVYY9hUKc1xZlXfKVYkHxrxyTk2nWyFDMGTroeNuBs9naqL6EMYi0xH7gGrH5Sq46g"
             />
             <div className="absolute inset-0 bg-black/15" />
-            <button className="absolute bottom-3 right-3 flex items-center gap-1 rounded border border-[#434655] bg-[#131313]/90 px-3 py-1 text-[12px] font-semibold uppercase tracking-widest hover:bg-[#131313]">
+            <TrackedButton eventName="ver_fotos_click" location="detalle_galeria" className="absolute bottom-3 right-3 flex items-center gap-1 rounded border border-[#434655] bg-[#131313]/90 px-3 py-1 text-[12px] font-semibold uppercase tracking-widest hover:bg-[#131313]">
               <span className="material-symbols-outlined text-sm">grid_view</span> Ver todas las fotos
-            </button>
+            </TrackedButton>
           </div>
         </div>
 
@@ -160,9 +167,9 @@ export default async function DetallePage({
                   costero y crea una atmósfera moderna y relajante.
                 </p>
               </div>
-              <button className="mt-3 flex items-center gap-1 text-[14px] text-[#b5c4ff] hover:underline">
+              <TrackedButton eventName="ver_mas_click" location="detalle_descripcion" className="mt-3 flex items-center gap-1 text-[14px] text-[#b5c4ff] hover:underline">
                 Ver más <span className="material-symbols-outlined text-sm">chevron_right</span>
-              </button>
+              </TrackedButton>
             </div>
 
             <div className="border-b border-[#434655] pb-6">
@@ -175,9 +182,9 @@ export default async function DetallePage({
                 <div className="flex items-center gap-3 text-[16px]"><span className="material-symbols-outlined text-[#c3c5d8]">kitchen</span> Cocina equipada premium</div>
                 <div className="flex items-center gap-3 text-[16px]"><span className="material-symbols-outlined text-[#c3c5d8]">tv</span> Smart TV de 75&quot;</div>
               </div>
-              <button className="mt-6 rounded border border-[#434655] px-6 py-3 text-[14px] hover:bg-[#2a2a2a]">
+              <TrackedButton eventName="ver_comodidades_click" location="detalle_comodidades" className="mt-6 rounded border border-[#434655] px-6 py-3 text-[14px] hover:bg-[#2a2a2a]">
                 Ver las 42 comodidades
-              </button>
+              </TrackedButton>
             </div>
 
             <div>
@@ -226,9 +233,9 @@ export default async function DetallePage({
                 </div>
               </div>
 
-              <Link href="/finalizar" className="mb-3 flex w-full items-center justify-center rounded bg-[#2d68ff] py-3 text-[20px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
+              <TrackedLink eventName="reservar_ahora_click" location="detalle_cta_desktop" href="/finalizar" className="mb-3 flex w-full items-center justify-center rounded bg-[#2d68ff] py-3 text-[20px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
                 Reservar ahora
-              </Link>
+              </TrackedLink>
               <p className="mb-6 text-center text-[14px] text-[#c3c5d8]">Todavía no se realiza ningún cobro</p>
 
               <div className="mb-6 space-y-3 border-b border-[#434655] pb-6 text-[14px]">
@@ -265,9 +272,9 @@ export default async function DetallePage({
             01 abr - 05 abr
           </div>
         </div>
-        <Link href="/finalizar" className="rounded bg-[#2d68ff] px-8 py-2.5 text-[18px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
+        <TrackedLink eventName="reservar_ahora_click" location="detalle_cta_mobile" href="/finalizar" className="rounded bg-[#2d68ff] px-8 py-2.5 text-[18px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
           Reservar
-        </Link>
+        </TrackedLink>
       </div>
 
       <footer className="w-full border-t border-[#434655] bg-[#0e0e0e] pb-24 lg:pb-0">

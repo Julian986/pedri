@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { MouseEvent, ReactNode } from 'react'
+import { sendEvent } from '@/lib/gtag'
 
 type PublicBackLinkProps = {
   href: string
@@ -26,11 +27,11 @@ export default function PublicBackLink({ href, className, children }: PublicBack
     }
 
     event.preventDefault()
+    sendEvent('volver_click', { location: 'public_back_link', href })
 
-    const hasReferrer = Boolean(document.referrer)
-    const sameOriginReferrer =
-      hasReferrer && new URL(document.referrer).origin === window.location.origin
-    const canGoBack = window.history.length > 1 && sameOriginReferrer
+    // Si hay historial, priorizamos volver atrás para preservar scroll/foco.
+    // Basarse solo en `document.referrer` puede fallar por políticas de navegador.
+    const canGoBack = typeof window !== 'undefined' && window.history.length > 1
 
     if (canGoBack) {
       router.back()

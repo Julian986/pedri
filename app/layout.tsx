@@ -14,14 +14,27 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 import { getRequestHostname, isPublicBookingHostname } from '@/lib/public-booking-host'
 
 export const metadata: Metadata = {
-  title: 'Pedri',
-  description: 'Software hecho a medida',
+  title: {
+    default: 'Pedri | Reservas de alojamientos',
+    template: '%s | Pedri',
+  },
+  description: 'Plataforma para gestionar reservas de alojamientos y administrar disponibilidad.',
   metadataBase: new URL('https://pedri.vercel.app'),
   manifest: '/manifest.json',
   themeColor: '#000000',
+  alternates: {
+    canonical: '/',
+  },
+  keywords: [
+    'reservas de alojamientos',
+    'gestion de reservas',
+    'alquiler temporario',
+    'propiedades',
+    'pedri',
+  ],
   openGraph: {
-    title: 'Pedri',
-    description: 'Software hecho a medida',
+    title: 'Pedri | Reservas de alojamientos',
+    description: 'Explorá propiedades y gestioná reservas en Pedri.',
     url: 'https://pedri.vercel.app',
     siteName: 'Pedri',
     images: [
@@ -37,8 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pedri',
-    description: 'Software hecho a medida',
+    title: 'Pedri | Reservas de alojamientos',
+    description: 'Explorá propiedades y gestioná reservas en Pedri.',
     images: ['https://res.cloudinary.com/dzoupwn0e/image/upload/v1763511701/logo_4_zmpqjk.webp'],
     creator: '@pedri',
   },

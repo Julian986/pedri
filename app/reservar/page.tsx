@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import ReservarHeroBookingBar from '@/components/ReservarHeroBookingBar'
+import TrackedLink from '@/components/TrackedLink'
+import TrackedButton from '@/components/TrackedButton'
 
 export default function ReservarPage() {
   return (
@@ -13,9 +15,9 @@ export default function ReservarPage() {
               <span className="text-[32px] font-bold leading-[40px] tracking-tight text-[#b5c4ff]">Pedri</span>
             </div>
           <nav className="flex items-center text-sm">
-            <button className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
+            <TrackedButton eventName="ingresar_click" location="reservar_header" className="px-1 text-[19px] font-extrabold leading-6 text-[#b5c4ff] transition duration-200 hover:text-[#d0daff] active:scale-95">
               Ingresar
-            </button>
+            </TrackedButton>
           </nav>
           </div>
         </header>
@@ -48,9 +50,9 @@ export default function ReservarPage() {
                   Propiedades seleccionadas por su ubicación, diseño y confort.
                 </p>
               </div>
-              <Link href="/explorar" className="flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.05em] text-[#b5c4ff] transition-colors hover:text-[#2d68ff]">
+              <TrackedLink eventName="ver_todas_propiedades_click" location="reservar_coleccion_destacada" href="/explorar" className="flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.05em] text-[#b5c4ff] transition-colors hover:text-[#2d68ff]">
                 Ver todas <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </Link>
+              </TrackedLink>
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
