@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import DatePicker from '@/components/DatePicker'
+import { sendEvent } from '@/lib/gtag'
 
 function todayISO(): string {
   const d = new Date()
@@ -100,6 +101,13 @@ export default function ReservarHeroBookingBar() {
 
       <button
         type="button"
+        onClick={() =>
+          sendEvent('buscar_click', {
+            location: 'reservar_hero_booking_bar',
+            has_check_in: Boolean(checkIn),
+            has_check_out: Boolean(checkOut),
+          })
+        }
         className="flex h-[44px] w-full items-center justify-center gap-2 whitespace-nowrap rounded bg-[#2d68ff] px-10 text-[20px] font-semibold leading-7 text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition duration-200 hover:opacity-90 active:scale-95 md:w-auto"
       >
         <span className="material-symbols-outlined">search</span>
