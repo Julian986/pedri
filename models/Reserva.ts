@@ -12,6 +12,12 @@ export interface IReserva extends Document {
   origen: 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Particular' | 'Otro' | 'Web';
   estado: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada';
   notas?: string;
+  pagoEstado?: 'pendiente' | 'aprobado' | 'rechazado' | 'cancelado' | 'reembolsado';
+  mercadoPagoPreferenceId?: string;
+  mercadoPagoPaymentId?: string;
+  pagoExpiraEn?: Date;
+  pagoAprobadoEn?: Date;
+  moneda?: 'ARS';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,6 +76,35 @@ const ReservaSchema = new Schema<IReserva>(
     },
     notas: {
       type: String,
+    },
+    pagoEstado: {
+      type: String,
+      enum: ['pendiente', 'aprobado', 'rechazado', 'cancelado', 'reembolsado'],
+      required: false,
+    },
+    mercadoPagoPreferenceId: {
+      type: String,
+      required: false,
+      index: true,
+    },
+    mercadoPagoPaymentId: {
+      type: String,
+      required: false,
+      index: true,
+    },
+    pagoExpiraEn: {
+      type: Date,
+      required: false,
+    },
+    pagoAprobadoEn: {
+      type: Date,
+      required: false,
+    },
+    moneda: {
+      type: String,
+      enum: ['ARS'],
+      required: false,
+      default: 'ARS',
     },
   },
   {

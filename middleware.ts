@@ -20,6 +20,8 @@ function isAllowedOnPublicHost(pathname: string): boolean {
   if (pathname === '/favicon.ico' || pathname === '/manifest.json') return true;
   if (pathname.startsWith('/api/reservas/disponibles')) return true;
   if (pathname.startsWith('/api/reservas/public')) return true;
+  if (pathname.startsWith('/api/mercadopago')) return true;
+  if (pathname.startsWith('/pago/')) return true;
   if (/\.(ico|png|jpg|jpeg|gif|webp|svg|json|webmanifest)$/i.test(pathname)) return true;
   return false;
 }
