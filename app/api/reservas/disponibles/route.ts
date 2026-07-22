@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         ? { $or: [{ capacidad: { $gte: huespedes } }, { capacidad: { $exists: false } }] }
         : {}),
     })
-      .select('nombre direccion ciudad tipo capacidad base precioPorNoche imagenes')
+      .select('nombre direccion ciudad tipo capacidad base precioPorNoche comisionPorcentaje imagenes')
       .sort({ nombre: 1 })
       .lean();
 
@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
             ciudad: p.ciudad,
             tipo: p.tipo,
             capacidad: p.capacidad,
+            comisionPorcentaje: p.comisionPorcentaje ?? 0,
             base: precio,
             precioPorNoche: precio,
             imagen: Array.isArray(p.imagenes) && p.imagenes[0] ? p.imagenes[0] : null,

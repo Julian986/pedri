@@ -23,9 +23,8 @@ export default function ReservarHeroBookingBar() {
   const router = useRouter()
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
-  const [huespedes, setHuespedes] = useState('2')
+  const [huespedes, setHuespedes] = useState('1')
   const [activePicker, setActivePicker] = useState<'in' | 'out' | null>(null)
-  const [error, setError] = useState('')
 
   const minIngreso = useMemo(() => todayISO(), [])
 
@@ -44,17 +43,13 @@ export default function ReservarHeroBookingBar() {
       has_check_in: Boolean(checkIn),
       has_check_out: Boolean(checkOut),
     })
-    if (!checkIn || !checkOut) {
-      setError('Seleccioná las fechas de ingreso y salida.')
-      return
-    }
-    setError('')
+    if (!checkIn || !checkOut) return
     const query = new URLSearchParams({ desde: checkIn, hasta: checkOut, huespedes })
     router.push(`/explorar?${query.toString()}`)
   }
 
   return (
-    <div className="relative flex w-full max-w-4xl flex-col items-end gap-2 rounded-lg border border-[#434655] bg-[#131313]/80 p-3 shadow-2xl backdrop-blur-md md:flex-row">
+    <div className="flex w-full max-w-4xl flex-col items-end gap-2 rounded-lg border border-[#434655] bg-[#131313]/80 p-3 shadow-2xl backdrop-blur-md md:flex-row">
       <div className="flex w-full flex-col gap-1">
         <label className="ml-2 text-left text-[12px] font-semibold uppercase tracking-[0.05em] text-[#c3c5d8]">
           Ingreso
@@ -107,16 +102,10 @@ export default function ReservarHeroBookingBar() {
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#8d90a1]">
             person
           </span>
-          <select
-            value={huespedes}
-            onChange={(event) => setHuespedes(event.target.value)}
-            className="w-full appearance-none rounded border border-[#8d90a1] bg-[#2a2a2a] py-3 pl-10 pr-9 text-[15px] font-medium text-[#e5e2e1] outline-none transition-colors focus:border-[#2d68ff] focus:ring-1 focus:ring-[#2d68ff]"
-          >
-            {Array.from({ length: 10 }, (_, index) => index + 1).map((cantidad) => (
-              <option key={cantidad} value={cantidad}>
-                {cantidad} {cantidad === 1 ? 'huésped' : 'huéspedes'}
-              </option>
-            ))}
+          <select value={huespedes} onChange={(e) => setHuespedes(e.target.value)} className="w-full appearance-none rounded border border-[#8d90a1] bg-[#2a2a2a] py-3 pl-10 pr-9 text-[15px] font-medium text-[#e5e2e1] outline-none transition-colors focus:border-[#2d68ff] focus:ring-1 focus:ring-[#2d68ff]">
+            <option value="1">1 huésped</option>
+            <option value="2">2 huéspedes</option>
+            <option value="3">3+ huéspedes</option>
           </select>
           <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8d90a1]">
             expand_more
@@ -132,7 +121,6 @@ export default function ReservarHeroBookingBar() {
         <span className="material-symbols-outlined">search</span>
         Buscar
       </button>
-      {error && <p className="w-full text-left text-sm text-red-300 md:absolute md:mt-16">{error}</p>}
     </div>
   )
 }

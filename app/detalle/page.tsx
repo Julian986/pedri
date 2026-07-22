@@ -5,6 +5,9 @@ import TrackedButton from '@/components/TrackedButton'
 
 type DetalleSearchParams = {
   propiedad?: string
+  desde?: string
+  hasta?: string
+  huespedes?: string
 }
 
 const PROPIEDADES = {
@@ -43,6 +46,13 @@ export default async function DetallePage({
   const params = await searchParams
   const propiedadKey = (params.propiedad || 'yeso').toLowerCase() as keyof typeof PROPIEDADES
   const propiedad = PROPIEDADES[propiedadKey] ?? PROPIEDADES.yeso
+  const finalizarQuery = new URLSearchParams({
+    propiedad: propiedadKey,
+    ...(params.desde ? { desde: params.desde } : {}),
+    ...(params.hasta ? { hasta: params.hasta } : {}),
+    ...(params.huespedes ? { huespedes: params.huespedes } : {}),
+  })
+  const finalizarHref = `/finalizar?${finalizarQuery.toString()}`
 
   return (
     <div className="min-h-[884px] bg-[#131313] text-[#e5e2e1]">
@@ -233,7 +243,7 @@ export default async function DetallePage({
                 </div>
               </div>
 
-              <TrackedLink eventName="reservar_ahora_click" location="detalle_cta_desktop" href="/finalizar" className="mb-3 flex w-full items-center justify-center rounded bg-[#2d68ff] py-3 text-[20px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
+              <TrackedLink eventName="reservar_ahora_click" location="detalle_cta_desktop" href={finalizarHref} className="mb-3 flex w-full items-center justify-center rounded bg-[#2d68ff] py-3 text-[20px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
                 Reservar ahora
               </TrackedLink>
               <p className="mb-6 text-center text-[14px] text-[#c3c5d8]">Todavía no se realiza ningún cobro</p>
@@ -272,7 +282,7 @@ export default async function DetallePage({
             01 abr - 05 abr
           </div>
         </div>
-        <TrackedLink eventName="reservar_ahora_click" location="detalle_cta_mobile" href="/finalizar" className="rounded bg-[#2d68ff] px-8 py-2.5 text-[18px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
+        <TrackedLink eventName="reservar_ahora_click" location="detalle_cta_mobile" href={finalizarHref} className="rounded bg-[#2d68ff] px-8 py-2.5 text-[18px] font-semibold text-[#fffcff] shadow-[0_4px_20px_rgba(45,104,255,0.3)] transition-colors hover:bg-[#0050e3]">
           Reservar
         </TrackedLink>
       </div>

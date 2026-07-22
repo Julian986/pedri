@@ -11,6 +11,8 @@ interface RangeDatePickerProps {
   placeholder?: string
   placeholderStart?: string
   placeholderEnd?: string
+  /** Si true, el calendario no se cierra hasta elegir inicio y fin. */
+  requireBothDates?: boolean
 }
 
 export default function RangeDatePicker({
@@ -21,6 +23,7 @@ export default function RangeDatePicker({
   placeholder = 'Seleccionar periodo',
   placeholderStart = 'Fecha inicio',
   placeholderEnd = 'Fecha fin',
+  requireBothDates = false,
 }: RangeDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [pickMode, setPickMode] = useState<'range' | 'start' | 'end'>('range')
@@ -339,7 +342,10 @@ export default function RangeDatePicker({
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-4"
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            if (requireBothDates && (!tempStartDate || !tempEndDate)) return
+            setIsOpen(false)
+          }}
         >
           {/* Calendar Modal */}
           <div 
@@ -350,10 +356,19 @@ export default function RangeDatePicker({
             onTouchEnd={onTouchEnd}
           >
               {/* Header */}
-              <div className="flex items-center justify-center px-6 py-4 border-b border-gray-700">
+              <div className="flex flex-col items-center justify-center gap-1 px-6 py-4 border-b border-gray-700">
                 <h3 className="text-xl font-semibold text-white capitalize">
                   {monthName} {year}
                 </h3>
+                {requireBothDates && (
+                  <p className="text-sm text-gray-400">
+                    {!tempStartDate
+                      ? 'Seleccioná la fecha de inicio'
+                      : !tempEndDate
+                        ? 'Seleccioná la fecha de fin'
+                        : `${formatDisplayDate(tempStartDate)} - ${formatDisplayDate(tempEndDate)}`}
+                  </p>
+                )}
               </div>
 
               {/* Días de la semana */}
