@@ -6,6 +6,13 @@ import { useModal } from '@/contexts/ModalContext'
 import AlojamientoModal from '@/components/AlojamientoModal'
 
 // Tipos de datos
+interface CanalIcal {
+  icalImportUrl?: string
+  icalExportToken?: string
+  ultimoSyncAt?: string | Date | null
+  ultimoSyncError?: string | null
+}
+
 interface Propiedad {
   _id: string
   nombre: string
@@ -13,6 +20,11 @@ interface Propiedad {
   comisionPorcentaje?: number
   base?: number
   capacidad?: number
+  canales?: {
+    icalExportToken?: string
+    airbnb?: CanalIcal
+    booking?: CanalIcal
+  }
 }
 
 interface Reserva {
@@ -237,10 +249,10 @@ export default function CalendarioPage() {
         if (raw.length === 0) return []
         // Mapear formato backend -> formato local esperado por el calendario
         return raw
-          // excluir canceladas/bloqueos
+          // excluir canceladas (los bloqueos iCal sí ocupan el calendario)
           .filter((r: any) => {
             const st = String(r?.estado || '').toLowerCase()
-            return st !== 'cancelada' && st !== 'bloqueo'
+            return st !== 'cancelada'
           })
           .map((r: any) => {
             const prop = r?.propiedadId
@@ -292,14 +304,28 @@ export default function CalendarioPage() {
     setIsAlojModalOpen(true)
   }
 
-  const guardarAlojamiento = async (data: { nombre: string; direccion?: string; comisionPorcentaje?: number; base?: number; capacidad?: number }) => {
+  const guardarAlojamiento = async (data: {
+    nombre: string
+    direccion?: string
+    comisionPorcentaje?: number
+    base?: number
+    capacidad?: number
+    canales?: Propiedad['canales']
+  }) => {
     try {
       if (propEnEdicion) {
         // Actualizar en backend
         const res = await fetch(`/api/propiedades/${propEnEdicion._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }),
+          body: JSON.stringify({
+            nombre: data.nombre,
+            direccion: data.direccion,
+            comisionPorcentaje: data.comisionPorcentaje,
+            base: data.base,
+            capacidad: data.capacidad,
+            ...(data.canales ? { canales: data.canales } : {}),
+          }),
         })
         if (!res.ok) throw new Error(`PUT ${res.status}`)
       } else {
@@ -307,7 +333,14 @@ export default function CalendarioPage() {
         const res = await fetch('/api/propiedades', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }),
+          body: JSON.stringify({
+            nombre: data.nombre,
+            direccion: data.direccion,
+            comisionPorcentaje: data.comisionPorcentaje,
+            base: data.base,
+            capacidad: data.capacidad,
+            ...(data.canales ? { canales: data.canales } : {}),
+          }),
         })
         if (!res.ok) throw new Error(`POST ${res.status}`)
       }
@@ -317,13 +350,29 @@ export default function CalendarioPage() {
       console.error('Error guardando alojamiento:', e)
       // fallback a estado local si algo falla
       if (!propEnEdicion) {
-        const nuevo: Propiedad = { _id: Date.now().toString(), nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }
+        const nuevo: Propiedad = {
+          _id: Date.now().toString(),
+          nombre: data.nombre,
+          direccion: data.direccion,
+          comisionPorcentaje: data.comisionPorcentaje,
+          base: data.base,
+          capacidad: data.capacidad,
+          canales: data.canales,
+        }
         setPropiedades((prev) => [nuevo, ...prev])
       } else {
         setPropiedades((prev) =>
           prev.map((p) =>
             p._id === propEnEdicion._id
-              ? { ...p, nombre: data.nombre, direccion: data.direccion, comisionPorcentaje: data.comisionPorcentaje, base: data.base, capacidad: data.capacidad }
+              ? {
+                  ...p,
+                  nombre: data.nombre,
+                  direccion: data.direccion,
+                  comisionPorcentaje: data.comisionPorcentaje,
+                  base: data.base,
+                  capacidad: data.capacidad,
+                  canales: data.canales ?? p.canales,
+                }
               : p
           )
         )
@@ -583,7 +632,15 @@ export default function CalendarioPage() {
         isOpen={isAlojModalOpen}
         onClose={() => setIsAlojModalOpen(false)}
         onSubmit={guardarAlojamiento}
-        initialData={propEnEdicion ? { nombre: propEnEdicion.nombre, direccion: propEnEdicion.direccion, comisionPorcentaje: propEnEdicion.comisionPorcentaje, base: propEnEdicion.base, capacidad: propEnEdicion.capacidad } : undefined}
+        initialData={propEnEdicion ? {
+          _id: propEnEdicion._id,
+          nombre: propEnEdicion.nombre,
+          direccion: propEnEdicion.direccion,
+          comisionPorcentaje: propEnEdicion.comisionPorcentaje,
+          base: propEnEdicion.base,
+          capacidad: propEnEdicion.capacidad,
+          canales: propEnEdicion.canales,
+        } : undefined}
         mode={propEnEdicion ? 'edit' : 'create'}
         onDelete={propEnEdicion ? () => { eliminarAlojamiento(propEnEdicion._id); setIsAlojModalOpen(false) } : undefined}
       />

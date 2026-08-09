@@ -139,7 +139,7 @@ export default function Home() {
             estado,
             telefono: r.telefonoHuesped || '',
             total: String(r.precioTotal || ''),
-            sena: '',
+            sena: r.sena != null && Number(r.sena) > 0 ? String(r.sena) : '',
           }
         })
         setReservations(mapped)
@@ -341,6 +341,7 @@ export default function Home() {
         fechaFin: toMiddayUtcIso(data.hasta),
         numeroHuespedes: Math.max(1, Number((data as any).numeroHuespedes || 1)),
         precioTotal: Number(data.total || 0),
+        sena: Math.max(0, Number(data.sena || 0) || 0),
         origen: data.plataforma || 'Particular',
         estado: 'confirmada',
       }
@@ -413,7 +414,7 @@ export default function Home() {
             estado,
             telefono: r.telefonoHuesped || '',
             total: String(r.precioTotal || ''),
-            sena: '',
+            sena: r.sena != null && Number(r.sena) > 0 ? String(r.sena) : '',
           }
         })
         setReservations(mapped)

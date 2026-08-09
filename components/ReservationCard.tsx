@@ -149,6 +149,16 @@ export default function ReservationCard({
           <BiPhone className="text-lg" />
           <span>{reservation.telefono}</span>
         </div>
+        {(reservation.sena || reservation.total) && (
+          <div className="flex items-center justify-between text-gray-400 pt-1">
+            {reservation.total ? (
+              <span className="text-white font-medium">Total: ${Number(reservation.total).toLocaleString('es-AR')}</span>
+            ) : <span />}
+            {reservation.sena ? (
+              <span className="text-sky-400">Seña: ${Number(reservation.sena).toLocaleString('es-AR')}</span>
+            ) : null}
+          </div>
+        )}
       </div>
       </div>
       

@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export type ExternalSource = 'airbnb' | 'booking' | 'pedri';
+
 export interface IReserva extends Document {
   propiedadId: mongoose.Types.ObjectId;
   nombreHuesped: string;
@@ -9,9 +11,15 @@ export interface IReserva extends Document {
   fechaFin: Date;
   numeroHuespedes: number;
   precioTotal: number;
+  /** Seña / anticipo cobrado (ARS). */
+  sena?: number;
   origen: 'Airbnb' | 'Booking' | 'Facebook' | 'Mercado Libre' | 'Recomendado' | 'Particular' | 'Otro' | 'Web';
-  estado: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada';
+  estado: 'pendiente' | 'confirmada' | 'en_curso' | 'completada' | 'cancelada' | 'bloqueo';
   notas?: string;
+  /** UID del evento iCal (idempotencia de import). */
+  externalUid?: string;
+  /** Canal de origen del evento externo. */
+  externalSource?: ExternalSource;
   pagoEstado?: 'pendiente' | 'aprobado' | 'rechazado' | 'cancelado' | 'reembolsado';
   mercadoPagoPreferenceId?: string;
   mercadoPagoPaymentId?: string;
@@ -64,6 +72,12 @@ const ReservaSchema = new Schema<IReserva>(
       required: [true, 'El precio total es requerido'],
       min: 0,
     },
+    sena: {
+      type: Number,
+      required: false,
+      min: 0,
+      default: 0,
+    },
     origen: {
       type: String,
       enum: ['Airbnb', 'Booking', 'Facebook', 'Mercado Libre', 'Recomendado', 'Particular', 'Otro', 'Web'],
@@ -76,6 +90,17 @@ const ReservaSchema = new Schema<IReserva>(
     },
     notas: {
       type: String,
+    },
+    externalUid: {
+      type: String,
+      required: false,
+      trim: true,
+      index: true,
+    },
+    externalSource: {
+      type: String,
+      enum: ['airbnb', 'booking', 'pedri'],
+      required: false,
     },
     pagoEstado: {
       type: String,
@@ -117,6 +142,14 @@ ReservaSchema.index({ propiedadId: 1, fechaInicio: 1, fechaFin: 1 });
 // Índices adicionales para filtro por rangos en Calendario/Listados
 ReservaSchema.index({ propiedadId: 1, fechaInicio: 1 });
 ReservaSchema.index({ propiedadId: 1, fechaFin: 1 });
+// Idempotencia iCal: un UID externo por propiedad (solo cuando hay externalUid)
+ReservaSchema.index(
+  { propiedadId: 1, externalUid: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { externalUid: { $type: 'string', $gt: '' } },
+  }
+);
 
 /**
  * Consulta estándar de Calendario (mes visible):
@@ -134,4 +167,3 @@ if (mongoose.models.Reserva) {
 const Reserva: Model<IReserva> = mongoose.model<IReserva>('Reserva', ReservaSchema);
 
 export default Reserva;
-

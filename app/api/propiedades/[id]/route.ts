@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import dbConnect from '@/lib/mongodb';
 import Propiedad from '@/models/Propiedad';
 
@@ -30,6 +31,38 @@ export async function GET(
   }
 }
 
+function ensureExportTokensInUpdate(data: Record<string, unknown>) {
+  const canales = data.canales as
+    | {
+        icalExportToken?: string;
+        airbnb?: { icalImportUrl?: string; icalExportToken?: string };
+        booking?: { icalImportUrl?: string; icalExportToken?: string };
+      }
+    | undefined;
+
+  if (!canales) return data;
+
+  const token =
+    canales.icalExportToken ||
+    canales.airbnb?.icalExportToken ||
+    canales.booking?.icalExportToken ||
+    crypto.randomBytes(24).toString('hex');
+
+  data.canales = {
+    ...canales,
+    icalExportToken: token,
+    airbnb: {
+      ...(canales.airbnb || {}),
+      icalExportToken: token,
+    },
+    booking: {
+      ...(canales.booking || {}),
+      icalExportToken: token,
+    },
+  };
+  return data;
+}
+
 // PUT - Actualizar propiedad
 export async function PUT(
   request: NextRequest,
@@ -40,6 +73,37 @@ export async function PUT(
 
     const data = await request.json();
     console.log(`[PUT /api/propiedades/${params.id}] Datos recibidos:`, JSON.stringify(data, null, 2));
+
+    // Si actualizan canales, preservar token existente si el cliente no lo manda
+    if (data.canales) {
+      const actual = await Propiedad.findById(params.id).select('canales').lean();
+      const existingToken =
+        actual?.canales?.icalExportToken ||
+        actual?.canales?.airbnb?.icalExportToken ||
+        actual?.canales?.booking?.icalExportToken;
+
+      if (existingToken && !data.canales.icalExportToken) {
+        data.canales.icalExportToken = existingToken;
+      }
+      // Preservar sync metadata si el cliente no la envía
+      if (actual?.canales?.airbnb && data.canales.airbnb) {
+        if (data.canales.airbnb.ultimoSyncAt === undefined) {
+          data.canales.airbnb.ultimoSyncAt = actual.canales.airbnb.ultimoSyncAt;
+        }
+        if (data.canales.airbnb.ultimoSyncError === undefined) {
+          data.canales.airbnb.ultimoSyncError = actual.canales.airbnb.ultimoSyncError;
+        }
+      }
+      if (actual?.canales?.booking && data.canales.booking) {
+        if (data.canales.booking.ultimoSyncAt === undefined) {
+          data.canales.booking.ultimoSyncAt = actual.canales.booking.ultimoSyncAt;
+        }
+        if (data.canales.booking.ultimoSyncError === undefined) {
+          data.canales.booking.ultimoSyncError = actual.canales.booking.ultimoSyncError;
+        }
+      }
+      ensureExportTokensInUpdate(data);
+    }
 
     const propiedad = await Propiedad.findByIdAndUpdate(
       params.id,
@@ -96,4 +160,3 @@ export async function DELETE(
     );
   }
 }
-

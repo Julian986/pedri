@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import dbConnect from '@/lib/mongodb';
 import Propiedad from '@/models/Propiedad';
 
@@ -37,6 +38,26 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     console.log('[POST /api/propiedades] Datos recibidos:', JSON.stringify(data, null, 2));
 
+    const token =
+      data?.canales?.icalExportToken ||
+      data?.canales?.airbnb?.icalExportToken ||
+      crypto.randomBytes(24).toString('hex');
+
+    data.canales = {
+      ...(data.canales || {}),
+      icalExportToken: token,
+      airbnb: {
+        icalImportUrl: '',
+        ...(data.canales?.airbnb || {}),
+        icalExportToken: token,
+      },
+      booking: {
+        icalImportUrl: '',
+        ...(data.canales?.booking || {}),
+        icalExportToken: token,
+      },
+    };
+
     const propiedad = await Propiedad.create(data);
     console.log('[POST /api/propiedades] Propiedad creada:', JSON.stringify(propiedad.toObject(), null, 2));
 
@@ -52,4 +73,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

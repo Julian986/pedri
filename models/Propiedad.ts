@@ -1,5 +1,21 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export type CanalIcalKey = 'airbnb' | 'booking';
+
+export interface ICanalIcal {
+  icalImportUrl?: string;
+  icalExportToken?: string;
+  ultimoSyncAt?: Date;
+  ultimoSyncError?: string | null;
+}
+
+export interface IPropiedadCanales {
+  /** Token compartido para el feed de exportación de Pedri (una URL por propiedad). */
+  icalExportToken?: string;
+  airbnb?: ICanalIcal;
+  booking?: ICanalIcal;
+}
+
 export interface IPropiedad extends Document {
   nombre: string;
   descripcion?: string;
@@ -18,9 +34,20 @@ export interface IPropiedad extends Document {
   servicios: string[];
   activo: boolean;
   colorUI?: string;
+  canales?: IPropiedadCanales;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const CanalIcalSchema = new Schema(
+  {
+    icalImportUrl: { type: String, required: false, trim: true, default: '' },
+    icalExportToken: { type: String, required: false, trim: true },
+    ultimoSyncAt: { type: Date, required: false },
+    ultimoSyncError: { type: String, required: false, default: null },
+  },
+  { _id: false }
+);
 
 const PropiedadSchema = new Schema<IPropiedad>(
   {
@@ -106,6 +133,15 @@ const PropiedadSchema = new Schema<IPropiedad>(
       required: false,
       trim: true,
     },
+    canales: {
+      type: {
+        icalExportToken: { type: String, required: false, trim: true },
+        airbnb: { type: CanalIcalSchema, required: false },
+        booking: { type: CanalIcalSchema, required: false },
+      },
+      required: false,
+      default: undefined,
+    },
   },
   {
     timestamps: true,
@@ -126,4 +162,3 @@ const Propiedad: Model<IPropiedad> =
   mongoose.model<IPropiedad>(MODEL_NAME, PropiedadSchema, 'propiedades');
 
 export default Propiedad;
-

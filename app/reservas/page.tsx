@@ -13,6 +13,7 @@ interface ReservaItem {
   huesped: string
   telefono: string
   valorTotal: number
+  sena: number
   comision: number
   propietario: number
   plataforma: 'Airbnb' | 'Booking' | 'Particular' | string
@@ -59,10 +60,14 @@ export default function ReservasPage() {
 
   const mapReservasFromApi = (list: any[]): ReservaItem[] => {
     const safeList = Array.isArray(list) ? list : []
-    const filtered = safeList.filter((r: any) => String(r?.estado || '').toLowerCase() !== 'cancelada')
+    const filtered = safeList.filter((r: any) => {
+      const st = String(r?.estado || '').toLowerCase()
+      return st !== 'cancelada' && st !== 'bloqueo'
+    })
     return filtered.map((r: any) => {
       const origen = r.origen || 'Particular'
       const valorTotal = Number(r.precioTotal || 0)
+      const sena = Math.max(0, Number(r.sena || 0) || 0)
       const pct = (r.propiedadId && typeof (r.propiedadId as any).comisionPorcentaje === 'number')
         ? (r.propiedadId as any).comisionPorcentaje
         : 10
@@ -85,6 +90,7 @@ export default function ReservasPage() {
         huesped: r.nombreHuesped || '',
         telefono: r.telefonoHuesped || '',
         valorTotal,
+        sena,
         comision,
         propietario,
         plataforma: origen,
@@ -104,6 +110,7 @@ export default function ReservasPage() {
     telefono: string
     plataforma: string
     valorTotal: string
+    sena: string
     numeroHuespedes: string
   } | null>(null)
 
@@ -192,6 +199,7 @@ export default function ReservasPage() {
       telefono: r.telefono,
       plataforma: r.plataforma || 'Particular',
       valorTotal: String(r.valorTotal ?? 0),
+      sena: String(r.sena ?? 0),
       numeroHuespedes: String(r.numeroHuespedes ?? 1),
     })
     setIsEditOpen(true)
@@ -210,6 +218,7 @@ export default function ReservasPage() {
         fechaFin: toMiddayUtcIso(editForm.hasta),
         numeroHuespedes: Math.max(1, Number(editForm.numeroHuespedes || 1)),
         precioTotal: Math.max(0, Number(editForm.valorTotal || 0)),
+        sena: Math.max(0, Number(editForm.sena || 0) || 0),
         origen: editForm.plataforma || 'Particular',
       }
 
@@ -400,10 +409,14 @@ export default function ReservasPage() {
               </div>
 
               {/* Montos */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Total</p>
                   <p className="text-sm font-bold text-white">{formatearMonto(reserva.valorTotal)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1">Seña</p>
+                  <p className="text-sm font-medium text-sky-400">{formatearMonto(reserva.sena)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Comisión</p>
@@ -492,6 +505,14 @@ export default function ReservasPage() {
                   className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
                 />
               </div>
+              <input
+                type="number"
+                min={0}
+                value={editForm.sena}
+                onChange={(e) => setEditForm((p) => p ? ({ ...p, sena: e.target.value }) : p)}
+                placeholder="Seña (ARS)"
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+              />
 
               <div className="relative">
                 <select
