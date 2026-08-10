@@ -409,15 +409,17 @@ export default function ReservasPage() {
               </div>
 
               {/* Montos */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className={`grid gap-3 ${reserva.sena > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Total</p>
                   <p className="text-sm font-bold text-white">{formatearMonto(reserva.valorTotal)}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Seña</p>
-                  <p className="text-sm font-medium text-sky-400">{formatearMonto(reserva.sena)}</p>
-                </div>
+                {reserva.sena > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Seña</p>
+                    <p className="text-sm font-medium text-sky-400">{formatearMonto(reserva.sena)}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Comisión</p>
                   <p className="text-sm font-medium text-orange-400">{formatearMonto(reserva.comision)}</p>
