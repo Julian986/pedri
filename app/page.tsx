@@ -22,17 +22,65 @@ interface Reservation {
   checkOutYear: number
   noches: number
   clientes: number
-  estado: 'Confirmada' | 'Cancelada' | 'Check-out' | 'Check-in' | 'Pendiente'
+  estado: 'Confirmada' | 'Cancelada' | 'Check-out' | 'Check-in' | 'Pendiente' | 'Sync'
   telefono: string
   total: string
   sena: string
+  origen?: string
+  externalUid?: string
+  needsCompletar?: boolean
 }
 
 function mapEstadoReservaUi(estadoBack: string): Reservation['estado'] {
   const s = (estadoBack || '').toLowerCase()
   if (s === 'cancelada') return 'Cancelada'
   if (s === 'pendiente') return 'Pendiente'
+  if (s === 'bloqueo') return 'Sync'
   return 'Confirmada'
+}
+
+function mapReservaFromApi(r: any, currentMonth: number, currentYear: number): Reservation {
+  const inicio = r.fechaInicio ? new Date(r.fechaInicio) : null
+  const fin = r.fechaFin ? new Date(r.fechaFin) : null
+  const checkInDay = inicio ? inicio.getDate() : 1
+  const checkInMonth = inicio ? inicio.getMonth() : currentMonth
+  const checkInYear = inicio ? inicio.getFullYear() : currentYear
+  const checkOutDay = fin ? fin.getDate() : checkInDay
+  const checkOutMonth = fin ? fin.getMonth() : checkInMonth
+  const checkOutYear = fin ? fin.getFullYear() : checkInYear
+  const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
+  const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
+  const estadoBack = (r.estado || '').toLowerCase()
+  const estado = mapEstadoReservaUi(estadoBack)
+  const origen = r.origen || ''
+  const externalUid = r.externalUid ? String(r.externalUid) : undefined
+  const totalNum = Number(r.precioTotal || 0)
+  const needsCompletar =
+    estadoBack === 'bloqueo' ||
+    (Boolean(externalUid) && totalNum <= 0 && !String(r.telefonoHuesped || '').trim())
+
+  return {
+    id: String(r._id),
+    propiedad: r.propiedadId?.nombre || '',
+    huesped: r.nombreHuesped || '',
+    checkIn: short(inicio),
+    checkOut: short(fin),
+    checkInDay,
+    checkInMonth,
+    checkInYear,
+    checkOutDay,
+    checkOutMonth,
+    checkOutYear,
+    noches,
+    clientes: Math.max(1, Number(r.numeroHuespedes || 1)),
+    estado,
+    telefono: r.telefonoHuesped || '',
+    total: String(r.precioTotal || ''),
+    sena: r.sena != null && Number(r.sena) > 0 ? String(r.sena) : '',
+    origen,
+    externalUid,
+    needsCompletar,
+  }
 }
 
 export default function Home() {
@@ -109,39 +157,7 @@ export default function Home() {
         if (!res.ok) throw new Error(String(res.status))
         const json = await res.json()
         const list: any[] = Array.isArray(json?.reservas) ? json.reservas : []
-        const mapped: Reservation[] = list.map((r) => {
-          const inicio = r.fechaInicio ? new Date(r.fechaInicio) : null
-          const fin = r.fechaFin ? new Date(r.fechaFin) : null
-          const checkInDay = inicio ? inicio.getDate() : 1
-          const checkInMonth = inicio ? inicio.getMonth() : currentMonth
-          const checkInYear = inicio ? inicio.getFullYear() : currentYear
-          const checkOutDay = fin ? fin.getDate() : checkInDay
-          const checkOutMonth = fin ? fin.getMonth() : checkInMonth
-          const checkOutYear = fin ? fin.getFullYear() : checkInYear
-          const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
-          const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
-          const estadoBack = (r.estado || '').toLowerCase()
-          const estado = mapEstadoReservaUi(estadoBack)
-          return {
-            id: String(r._id),
-            propiedad: r.propiedadId?.nombre || '',
-            huesped: r.nombreHuesped || '',
-            checkIn: short(inicio),
-            checkOut: short(fin),
-            checkInDay,
-            checkInMonth,
-            checkInYear,
-            checkOutDay,
-            checkOutMonth,
-            checkOutYear,
-            noches,
-            clientes: Math.max(1, Number(r.numeroHuespedes || 1)),
-            estado,
-            telefono: r.telefonoHuesped || '',
-            total: String(r.precioTotal || ''),
-            sena: r.sena != null && Number(r.sena) > 0 ? String(r.sena) : '',
-          }
-        })
+        const mapped: Reservation[] = list.map((r) => mapReservaFromApi(r, currentMonth, currentYear))
         setReservations(mapped)
       } catch {
         setReservations([])
@@ -384,39 +400,7 @@ export default function Home() {
       if (listRes.ok) {
         const json = await listRes.json()
         const list: any[] = Array.isArray(json?.reservas) ? json.reservas : []
-        const mapped: Reservation[] = list.map((r) => {
-          const inicio = r.fechaInicio ? new Date(r.fechaInicio) : null
-          const fin = r.fechaFin ? new Date(r.fechaFin) : null
-          const checkInDay = inicio ? inicio.getDate() : 1
-          const checkInMonth = inicio ? inicio.getMonth() : currentMonth
-          const checkInYear = inicio ? inicio.getFullYear() : currentYear
-          const checkOutDay = fin ? fin.getDate() : checkInDay
-          const checkOutMonth = fin ? fin.getMonth() : checkInMonth
-          const checkOutYear = fin ? fin.getFullYear() : checkInYear
-          const noches = (inicio && fin) ? Math.max(0, Math.round((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24))) : 0
-          const short = (d: Date | null) => d ? `${d.getDate()} ${d.toLocaleDateString('es', { month: 'short' })}` : ''
-          const estadoBack = (r.estado || '').toLowerCase()
-          const estado = mapEstadoReservaUi(estadoBack)
-          return {
-            id: String(r._id),
-            propiedad: r.propiedadId?.nombre || '',
-            huesped: r.nombreHuesped || '',
-            checkIn: short(inicio),
-            checkOut: short(fin),
-            checkInDay,
-            checkInMonth,
-            checkInYear,
-            checkOutDay,
-            checkOutMonth,
-            checkOutYear,
-            noches,
-            clientes: Math.max(1, Number(r.numeroHuespedes || 1)),
-            estado,
-            telefono: r.telefonoHuesped || '',
-            total: String(r.precioTotal || ''),
-            sena: r.sena != null && Number(r.sena) > 0 ? String(r.sena) : '',
-          }
-        })
+        const mapped: Reservation[] = list.map((r) => mapReservaFromApi(r, currentMonth, currentYear))
         setReservations(mapped)
       }
     } catch (e) {

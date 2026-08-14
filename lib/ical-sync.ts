@@ -48,6 +48,21 @@ async function hasLocalConflict(
   });
 }
 
+function isEnrichedReserva(r: {
+  estado?: string;
+  precioTotal?: number;
+  sena?: number;
+  telefonoHuesped?: string;
+}): boolean {
+  const st = String(r.estado || '').toLowerCase();
+  // Ya promovida / reserva real (no bloqueo genérico de sync)
+  if (st && st !== 'bloqueo' && st !== 'cancelada') return true;
+  if (typeof r.precioTotal === 'number' && r.precioTotal > 0) return true;
+  if (typeof r.sena === 'number' && r.sena > 0) return true;
+  if (r.telefonoHuesped && String(r.telefonoHuesped).trim()) return true;
+  return false;
+}
+
 export async function syncPropiedadCanal(
   propiedad: IPropiedad,
   canal: CanalIcalKey
@@ -97,12 +112,17 @@ export async function syncPropiedadCanal(
       });
 
       if (existing) {
-        const changed =
+        const datesChanged =
           existing.fechaInicio.getTime() !== ev.start.getTime() ||
-          existing.fechaFin.getTime() !== ev.end.getTime() ||
-          existing.estado === 'cancelada';
+          existing.fechaFin.getTime() !== ev.end.getTime();
+        const wasCancelled = existing.estado === 'cancelada';
+        const enriched = isEnrichedReserva(existing);
 
-        if (changed) {
+        if (!datesChanged && !wasCancelled) {
+          continue;
+        }
+
+        if (datesChanged || wasCancelled) {
           const conflict = await hasLocalConflict(
             propiedad._id as mongoose.Types.ObjectId,
             ev.start,
@@ -115,12 +135,22 @@ export async function syncPropiedadCanal(
             );
             continue;
           }
+
           existing.fechaInicio = ev.start;
           existing.fechaFin = ev.end;
-          existing.estado = 'bloqueo';
           existing.origen = origenFromCanal(canal);
           existing.externalSource = canal;
-          if (ev.summary) existing.nombreHuesped = huespedGenerico(canal, ev.summary);
+
+          if (enriched) {
+            // Pedro ya completó datos: no bajar a bloqueo ni pisar huésped/totales
+            if (wasCancelled) {
+              existing.estado = 'confirmada';
+            }
+          } else {
+            existing.estado = 'bloqueo';
+            if (ev.summary) existing.nombreHuesped = huespedGenerico(canal, ev.summary);
+          }
+
           await existing.save();
           base.updated += 1;
         }
@@ -159,7 +189,7 @@ export async function syncPropiedadCanal(
       base.imported += 1;
     }
 
-    // Liberar bloqueos de este canal que ya no vienen en el feed
+    // Liberar eventos de este canal que ya no vienen en el feed (también enriquecidas)
     const stale = await Reserva.find({
       propiedadId: propiedad._id,
       externalSource: canal,

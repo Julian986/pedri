@@ -34,13 +34,65 @@ interface Reserva {
   fechaFin: string
   precio: number
   nombreHuesped?: string
+  origen?: string
 }
 
 interface EstadoDia {
   ocupado: boolean
   precio?: number
   reservaId?: string
+  origen?: string
 }
+
+type CeldaOcupacion = { precio: number; origen: string }
+
+function canalLabel(origen?: string): string {
+  switch ((origen || '').trim()) {
+    case 'Airbnb':
+      return 'Airbnb'
+    case 'Booking':
+      return 'Booking'
+    case 'Web':
+      return 'Web'
+    case 'Particular':
+      return 'Manual'
+    case '':
+      return 'Ocupado'
+    default:
+      return origen || 'Ocupado'
+  }
+}
+
+function canalChipClass(origen?: string): string {
+  switch ((origen || '').trim()) {
+    case 'Airbnb':
+      return 'border-pink-600/40 text-pink-300 bg-pink-500/10'
+    case 'Booking':
+      return 'border-blue-600/40 text-blue-300 bg-blue-500/10'
+    case 'Web':
+      return 'border-amber-600/40 text-amber-300 bg-amber-500/10'
+    case 'Particular':
+      return 'border-emerald-600/40 text-emerald-300 bg-emerald-500/10'
+    default:
+      return 'border-rose-600/40 text-rose-300 bg-rose-500/10'
+  }
+}
+
+function canalDotClass(origen?: string): string {
+  switch ((origen || '').trim()) {
+    case 'Airbnb':
+      return 'bg-pink-400'
+    case 'Booking':
+      return 'bg-blue-400'
+    case 'Web':
+      return 'bg-amber-400'
+    case 'Particular':
+      return 'bg-emerald-400'
+    default:
+      return 'bg-rose-400'
+  }
+}
+
 
 // Constantes fuera del componente para evitar recreación
 const NOMBRES_MESES = [
@@ -125,7 +177,7 @@ export default function CalendarioPage() {
 
   // Indexar reservas por propiedad y día del mes visible: O(n) preproceso, O(1) por celda
   const ocupacionPorPropiedad = useMemo(() => {
-    const mapa = new Map<string, Map<number, number>>()
+    const mapa = new Map<string, Map<number, CeldaOcupacion>>()
     if (reservas.length === 0) return mapa
 
     const inicioMes = new Date(añoVisor, mesVisor, 1)
@@ -146,12 +198,15 @@ export default function CalendarioPage() {
 
       let diasProp = mapa.get(reserva.propiedad)
       if (!diasProp) {
-        diasProp = new Map<number, number>()
+        diasProp = new Map<number, CeldaOcupacion>()
         mapa.set(reserva.propiedad, diasProp)
       }
 
       for (let d = new Date(desde); d <= hasta; d.setDate(d.getDate() + 1)) {
-        diasProp.set(d.getDate(), reserva.precio)
+        diasProp.set(d.getDate(), {
+          precio: reserva.precio,
+          origen: reserva.origen || '',
+        })
       }
     }
 
@@ -272,6 +327,7 @@ export default function CalendarioPage() {
               fechaFin: ymd(r?.fechaFin),
               precio: Number(r?.precioTotal || 0),
               nombreHuesped: r?.nombreHuesped || '',
+              origen: r?.origen || '',
             } as Reserva
           })
       })()
@@ -406,9 +462,9 @@ export default function CalendarioPage() {
   const obtenerEstadoDia = (propiedadId: string, diaNumero: number): EstadoDia => {
     const diasProp = ocupacionPorPropiedad.get(propiedadId)
     if (!diasProp) return { ocupado: false }
-    const precio = diasProp.get(diaNumero)
-    if (precio !== undefined) {
-      return { ocupado: true, precio }
+    const celda = diasProp.get(diaNumero)
+    if (celda) {
+      return { ocupado: true, precio: celda.precio, origen: celda.origen }
     }
     return { ocupado: false }
   }
@@ -467,10 +523,16 @@ export default function CalendarioPage() {
     <main className="min-h-screen bg-black text-white flex flex-col pb-16 md:pb-0">
       {/* Header con navegación de mes */}
       <div className="sticky top-0 bg-black z-10">
-        <div className="flex items-center justify-center px-4 py-3">
+        <div className="flex items-center justify-center px-4 py-3 flex-col gap-2">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{NOMBRES_MESES[mesVisor]}</h2>
             <span className="text-sm text-gray-400">{añoVisor}</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] text-gray-400">
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-pink-400" />Airbnb</span>
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Booking</span>
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Manual</span>
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Web</span>
           </div>
         </div>
       </div>
@@ -536,9 +598,9 @@ export default function CalendarioPage() {
                     className="w-24 h-14 border-r border-gray-800 flex items-center justify-center"
                   >
                     {estado.ocupado ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-rose-600/40 text-rose-300 bg-rose-500/10">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                        Ocupado
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${canalChipClass(estado.origen)}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${canalDotClass(estado.origen)}`}></span>
+                        {canalLabel(estado.origen)}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-emerald-600/30 text-emerald-300 bg-emerald-500/10">

@@ -18,6 +18,9 @@ interface ReservaItem {
   propietario: number
   plataforma: 'Airbnb' | 'Booking' | 'Particular' | string
   numeroHuespedes?: number
+  estado?: string
+  externalUid?: string
+  externalSource?: string
 }
 
 interface PropiedadItem {
@@ -62,7 +65,7 @@ export default function ReservasPage() {
     const safeList = Array.isArray(list) ? list : []
     const filtered = safeList.filter((r: any) => {
       const st = String(r?.estado || '').toLowerCase()
-      return st !== 'cancelada' && st !== 'bloqueo'
+      return st !== 'cancelada'
     })
     return filtered.map((r: any) => {
       const origen = r.origen || 'Particular'
@@ -95,6 +98,9 @@ export default function ReservasPage() {
         propietario,
         plataforma: origen,
         numeroHuespedes: typeof r.numeroHuespedes === 'number' ? r.numeroHuespedes : undefined,
+        estado: String(r.estado || ''),
+        externalUid: r.externalUid ? String(r.externalUid) : undefined,
+        externalSource: r.externalSource ? String(r.externalSource) : undefined,
       }
     })
   }
@@ -112,6 +118,8 @@ export default function ReservasPage() {
     valorTotal: string
     sena: string
     numeroHuespedes: string
+    estado?: string
+    externalUid?: string
   } | null>(null)
 
   useEffect(() => {
@@ -188,6 +196,16 @@ export default function ReservasPage() {
     }
   }
 
+  const esSyncIcal = (r: Pick<ReservaItem, 'estado' | 'externalUid'>) =>
+    Boolean(r.externalUid) || String(r.estado || '').toLowerCase() === 'bloqueo'
+
+  const labelSync = (r: Pick<ReservaItem, 'plataforma' | 'externalSource'>) => {
+    const src = (r.externalSource || '').toLowerCase()
+    if (src === 'airbnb' || r.plataforma === 'Airbnb') return 'Airbnb · sync'
+    if (src === 'booking' || r.plataforma === 'Booking') return 'Booking · sync'
+    return 'OTA · sync'
+  }
+
   const abrirEdicion = (r: ReservaItem) => {
     setErrorMsg(null)
     setEditForm({
@@ -198,9 +216,11 @@ export default function ReservasPage() {
       huesped: r.huesped,
       telefono: r.telefono,
       plataforma: r.plataforma || 'Particular',
-      valorTotal: String(r.valorTotal ?? 0),
-      sena: String(r.sena ?? 0),
+      valorTotal: r.valorTotal > 0 ? String(r.valorTotal) : '',
+      sena: r.sena > 0 ? String(r.sena) : '',
       numeroHuespedes: String(r.numeroHuespedes ?? 1),
+      estado: r.estado,
+      externalUid: r.externalUid,
     })
     setIsEditOpen(true)
   }
@@ -210,7 +230,8 @@ export default function ReservasPage() {
     try {
       setEditSaving(true)
       setErrorMsg(null)
-      const payload = {
+      const eraBloqueo = String(editForm.estado || '').toLowerCase() === 'bloqueo'
+      const payload: Record<string, unknown> = {
         propiedadId: editForm.propiedadId,
         nombreHuesped: editForm.huesped,
         telefonoHuesped: editForm.telefono,
@@ -220,6 +241,10 @@ export default function ReservasPage() {
         precioTotal: Math.max(0, Number(editForm.valorTotal || 0)),
         sena: Math.max(0, Number(editForm.sena || 0) || 0),
         origen: editForm.plataforma || 'Particular',
+      }
+      // Completar datos de un sync iCal: pasa a confirmada sin perder externalUid
+      if (eraBloqueo || editForm.externalUid) {
+        payload.estado = 'confirmada'
       }
 
       const res = await fetch(`/api/reservas/${editForm.id}`, {
@@ -377,17 +402,28 @@ export default function ReservasPage() {
                   >
                     <IoPencil className="text-white" />
                   </button>
-                  <div className="bg-gray-800 px-4 py-1.5 rounded-full">
-                    <span className="text-xs font-medium text-white">
-                      {reserva.plataforma}
-                    </span>
-                  </div>
+                  {esSyncIcal(reserva) ? (
+                    <div className="bg-sky-500/20 ring-1 ring-sky-500/40 px-3 py-1.5 rounded-full">
+                      <span className="text-xs font-medium text-sky-300">
+                        {labelSync(reserva)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-800 px-4 py-1.5 rounded-full">
+                      <span className="text-xs font-medium text-white">
+                        {reserva.plataforma}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Propiedad */}
               <div className="mb-3">
                 <h3 className="text-base font-semibold text-white">{reserva.propiedad}</h3>
+                {esSyncIcal(reserva) && reserva.valorTotal <= 0 && !reserva.telefono.trim() ? (
+                  <p className="text-xs text-sky-400 mt-1">Sin datos · completar</p>
+                ) : null}
               </div>
 
               {/* Huésped */}
@@ -395,11 +431,11 @@ export default function ReservasPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Huésped</p>
-                    <p className="text-sm font-medium text-white">{reserva.huesped}</p>
+                    <p className="text-sm font-medium text-white">{reserva.huesped || '—'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-400">Teléfono</p>
-                    <p className="text-sm font-medium text-white">{reserva.telefono}</p>
+                    <p className="text-sm font-medium text-white">{reserva.telefono || 'Sin datos'}</p>
                   </div>
                 </div>
                 <div className="mt-2">
@@ -409,6 +445,7 @@ export default function ReservasPage() {
               </div>
 
               {/* Montos */}
+              {reserva.valorTotal > 0 ? (
               <div className={`grid gap-3 ${reserva.sena > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Total</p>
@@ -429,6 +466,9 @@ export default function ReservasPage() {
                   <p className="text-sm font-medium text-green-400">{formatearMonto(reserva.propietario)}</p>
                 </div>
               </div>
+              ) : (
+                <p className="text-xs text-gray-500">Sin total cargado todavía</p>
+              )}
             </div>
           ))}
         </div>
@@ -437,10 +477,28 @@ export default function ReservasPage() {
 
       {/* Modal editar reserva */}
       {isEditOpen && editForm && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[95] flex items-center justify-center px-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-md p-5 shadow-2xl">
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[95] flex items-center justify-center px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsEditOpen(false)
+              setEditForm(null)
+            }
+          }}
+        >
+          <div
+            className="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-md p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Editar reserva</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Editar reserva</h3>
+                {editForm.externalUid || String(editForm.estado || '').toLowerCase() === 'bloqueo' ? (
+                  <p className="text-xs text-sky-400 mt-1">
+                    Sync iCal — completá huésped, teléfono, total y seña.
+                  </p>
+                ) : null}
+              </div>
               <button
                 type="button"
                 onClick={() => { setIsEditOpen(false); setEditForm(null) }}
@@ -503,7 +561,7 @@ export default function ReservasPage() {
                   min={0}
                   value={editForm.valorTotal}
                   onChange={(e) => setEditForm((p) => p ? ({ ...p, valorTotal: e.target.value }) : p)}
-                  placeholder="Total (ARS)"
+                  placeholder="Total"
                   className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -512,7 +570,7 @@ export default function ReservasPage() {
                 min={0}
                 value={editForm.sena}
                 onChange={(e) => setEditForm((p) => p ? ({ ...p, sena: e.target.value }) : p)}
-                placeholder="Seña (ARS)"
+                placeholder="Seña"
                 className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
               />
 
